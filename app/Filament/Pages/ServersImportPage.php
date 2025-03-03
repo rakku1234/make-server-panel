@@ -1,0 +1,181 @@
+<?php
+
+namespace App\Filament\Pages;
+
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Filament\Pages\Page;
+use Filament\Notifications\Notification;
+use App\Models\Server;
+use App\Models\Egg;
+use App\Models\Allocation;
+use App\Models\Node;
+use Exception;
+
+class ServersImportPage extends Page
+{
+    protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
+
+    protected static string $view = 'filament.pages.servers-import-page';
+
+    protected static ?string $title = 'サーバー情報の取り込み';
+
+    protected static ?string $navigationLabel = 'サーバー情報の取り込み';
+
+    protected static ?string $navigationGroup = 'パネル管理';
+
+    protected static ?int $navigationSort = 2;
+
+    public ?string $importResult = null;
+
+    public function mount(): void
+    {
+        if (!auth()->user()->hasPermissionTo('servers.import')) {
+            abort(403);
+        }
+    }
+
+    public function importServersFromPelican(): void
+    {
+        $apiToken = config('panel.api_token');
+
+        $nodesApiUrl = config('panel.api_url').'/api/application/nodes';
+        $nodesResponse = Http::withToken($apiToken)->get($nodesApiUrl);
+
+        $nodesData = [];
+
+        if ($nodesResponse->successful()) {
+            $nodesData = $nodesResponse->json()['data'] ?? [];
+
+            foreach ($nodesData as $nodeItem) {
+                $attributes = $nodeItem['attributes'] ?? [];
+                if (isset($attributes['id']) && Node::where('node_id', $attributes['id'])->exists()) {
+                    continue;
+                }
+                Node::create([
+                    'node_id'          => $attributes['id'] ?? '',
+                    'slug'             => $attributes['name'] ?? '',
+                    'uuid'             => $attributes['uuid'] ?? '',
+                    'name'             => $attributes['name'] ?? '',
+                    'description'      => $attributes['description'] ?? '',
+                    'maintenance_mode' => $attributes['maintenance_mode'] ?? false,
+                    'public'           => $attributes['public'] ?? false,
+                    'created_at'       => $attributes['created_at'] ?? '',
+                    'updated_at'       => $attributes['updated_at'] ?? '',
+                ]);
+            }
+        }
+
+        $allocationsData = [];
+        foreach ($nodesData as $nodeItem) {
+            $nodeAttributes = $nodeItem['attributes'] ?? [];
+            if (!isset($nodeAttributes['id'])) {
+                continue;
+            }
+            $nodeId = $nodeAttributes['id'];
+            $allocationsApiUrl = config('panel.api_url').'/api/application/nodes/'.$nodeId.'/allocations';
+            $allocationsResponse = Http::withToken($apiToken)->get($allocationsApiUrl);
+            if ($allocationsResponse->successful()) {
+                $data = $allocationsResponse->json();
+                $nodeAllocations = $data['data'] ?? [];
+                $allocationsData = array_merge($allocationsData, $nodeAllocations);
+
+                foreach ($nodeAllocations as $allocationItem) {
+                    $attributes = $allocationItem['attributes'] ?? [];
+                    if (isset($attributes['id']) && Allocation::where('port', $attributes['port'])->exists()) {
+                        continue;
+                    }
+                    Allocation::create([
+                        'id'       => $attributes['id'] ?? '',
+                        'alias'    => $attributes['alias'] ?? '',
+                        'port'     => $attributes['port'] ?? 0,
+                        'assigned' => $attributes['assigned'] ?? false,
+                        'node_id'  => $attributes['node'] ?? $nodeId,
+                        ]
+                    );
+                }
+            }
+        }
+
+        $eggsApiUrl = config('panel.api_url').'/api/application/eggs';
+        $eggsResponse = Http::withToken($apiToken)->get($eggsApiUrl);
+
+        $eggsData = [];
+
+        if ($eggsResponse->successful()) {
+            $data = $eggsResponse->json();
+            $eggsData = $data['data'] ?? [];
+
+            foreach ($eggsData as $eggItem) {
+                $attributes = $eggItem['attributes'] ?? [];
+                $dockerImages = $attributes['docker_images'] ?? [];
+                if (!is_array($dockerImages)) {
+                    $dockerImages = [$dockerImages];
+                }
+                if (isset($attributes['uuid']) && Egg::where('uuid', $attributes['uuid'])->exists()) {
+                    continue;
+                }
+                Egg::create([
+                    'uuid'          => $attributes['uuid'] ?? '',
+                    'egg_id'        => $attributes['id'] ?? '',
+                    'name'          => $attributes['name'] ?? '',
+                    'description'   => $attributes['description'] ?? '',
+                    'docker_images' => $dockerImages,
+                    'slug'          => $attributes['name'] ?? Str::random(10),
+                    ]
+                );
+            }
+        }
+
+        $serversApiUrl = config('panel.api_url').'/api/application/servers';
+        $serversResponse = Http::withToken($apiToken)->get($serversApiUrl);
+
+        $serversData = [];
+
+        if ($serversResponse->successful()) {
+            $serversData = $serversResponse->json()['data'] ?? [];
+
+            foreach ($serversData as $serverItem) {
+                $attributes = $serverItem['attributes'] ?? [];
+
+                if (isset($attributes['uuid']) && Server::where('uuid', $attributes['uuid'])->exists()) {
+                    continue;
+                }
+                try {
+                    Server::create([
+                    //'id'             => $attributes['id'],
+                    'limits'         => is_array($attributes['limits'] ?? null) ? $attributes['limits'] : [],
+                    'user'           => $attributes['user'],
+                    'egg'            => $attributes['egg'],
+                    'feature_limits' => is_array($attributes['feature_limits'] ?? null) ? $attributes['feature_limits'] : [],
+                    'status'         => $attributes['status'],
+                    'uuid'           => $attributes['uuid'],
+                    'name'           => $attributes['name'],
+                    'node'           => $attributes['node'],
+                    'description'    => $attributes['description'] ?? '',
+                    'allocation_id'  => $attributes['allocation'],
+                    'docker_image'   => $attributes['container']['image'],
+                    'egg_variables'  => $attributes['container']['environment'] ?? null,
+                    'start_on_completion' => true,
+                    'slug'           => $attributes['external_id'] ?? Str::random(10),
+                    ]);
+                } catch (Exception $e) {
+                    Notification::make()
+                        ->title('サーバー情報の取り込みに失敗しました')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                    Log::error($e->getMessage());
+                }
+            }
+        }
+
+        $this->importResult = "Eggs (".count($eggsData)."個) とサーバー情報 (".count($serversData)."個) と Allocations (".count($allocationsData)."個) の取り込みが完了しました";
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->check() && auth()->user()->hasPermissionTo('servers.import');
+    }
+}

@@ -1,0 +1,9 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+parameters:
+    paths:
+        - app
+        - database/migrations
+        - database/seeders
+        - resources/views
+    level: 5

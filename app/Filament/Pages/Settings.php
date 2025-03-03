@@ -1,0 +1,116 @@
+<?php
+
+namespace App\Filament\Pages;
+
+use Illuminate\Support\Facades\File;
+use Filament\Pages\Page;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Form;
+use Filament\Notifications\Notification;
+
+class Settings extends Page
+{
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+
+    protected static string $view = 'filament.pages.settings';
+
+    protected static ?string $navigationLabel = '設定';
+
+    protected static ?string $navigationGroup = 'パネル管理';
+
+    protected static ?int $navigationSort = 3;
+
+    public ?array $data = [];
+
+    public function getTitle(): string
+    {
+        return '設定';
+    }
+
+    public function mount(): void
+    {
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403);
+        }
+        $env = File::get(base_path('.env'));
+        $lines = explode("\n", $env);
+        foreach ($lines as $line) {
+            if (str_contains($line, '=')) {
+                [$key, $value] = explode('=', $line, 2);
+                $this->data[trim($key)] = trim($value);
+            }
+        }
+    }
+
+    public function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                TextInput::make('APP_NAME')
+                    ->label('アプリケーション名')
+                    ->hint('この設定は、アプリケーションの名前です'),
+                TextInput::make('APP_URL')
+                    ->label('アプリケーションURL')
+                    ->hint('この設定は、アプリケーションのURLです'),
+                TextInput::make('PANEL_API_URL')
+                    ->label('パネルAPI URL')
+                    ->hint('この設定は、パネルAPIのURLです'),
+                TextInput::make('PANEL_API_TOKEN')
+                    ->label('パネルAPIトークン')
+                    ->hint('この設定は、パネルAPIのトークンです')
+                    ->password()
+                    ->revealable(),
+                TextInput::make('PANEL_API_CLIENT_TOKEN')
+                    ->label('パネルAPIクライアントトークン')
+                    ->hint('この設定は、パネルAPIのクライアントトークンです')
+                    ->password()
+                    ->revealable(),
+                TextInput::make('TURNSTILE_SITEKEY')
+                    ->label('Cloudflare Turnstileサイトキー')
+                    ->hint('この設定は、Cloudflare Turnstileのサイトキーです')
+                    ->password()
+                    ->revealable(),
+                TextInput::make('TURNSTILE_SECRET')
+                    ->label('Cloudflare Turnstileシークレットキー')
+                    ->hint('この設定は、Cloudflare Turnstileのシークレットキーです')
+                    ->password()
+                    ->revealable(),
+                TextInput::make('TRANSLATOR_KEY')
+                    ->label('翻訳キー')
+                    ->hint('この設定は、翻訳キーです')
+                    ->password()
+                    ->revealable(),
+                TextInput::make('TRANSLATOR_REGION')
+                    ->hint('この設定は、翻訳リージョンです')
+                    ->label('翻訳リージョン'),
+                TextInput::make('DISCORD_WEBHOOK_URL')
+                    ->label('Discord Webhook URL')
+                    ->hint('この設定は、Discordに通知を送信するためのWebhook URLです')
+                    ->password()
+                    ->revealable(),
+            ])
+            ->statePath('data');
+    }
+
+    public function save(): void
+    {
+        $env = File::get(base_path('.env'));
+        foreach ($this->data as $key => $value) {
+            $env = preg_replace(
+                "/^{$key}=.*/m",
+                "{$key}={$value}",
+                $env
+            );
+        }
+        File::put(base_path('.env'), $env);
+        Notification::make()
+            ->success()
+            ->title('設定を保存しました')
+            ->send();
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return auth()->check() && auth()->user()->hasRole('admin');
+    }
+}
