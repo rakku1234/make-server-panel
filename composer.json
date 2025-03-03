@@ -9,7 +9,7 @@
         "php": "^8.4",
         "codewithdennis/filament-simple-alert": "^3.0",
         "cviebrock/eloquent-sluggable": "^12.0",
-        "filament/filament": "3.3",
+        "filament/filament": "3.3.2",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
