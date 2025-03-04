@@ -136,7 +136,7 @@ class ServerResource extends Resource
                                 return $query->get()
                                     ->mapWithKeys(function ($allocation) {
                                         return [
-                                            $allocation->id => $allocation->alias . ':' . $allocation->port,
+                                            $allocation->id => "{$allocation->alias}:{$allocation->port}",
                                         ];
                                     })
                                     ->toArray();
@@ -178,12 +178,12 @@ class ServerResource extends Resource
                                     foreach ($variables as $variable) {
                                         if (isset($variable['env_variable'])) {
                                             $envVar = $variable['env_variable'];
-                                            $values[$envVar] = $variable['default_value'] ?? '';
+                                            $values[$envVar] = $variable['default_value'];
                                             $metadata[$envVar] = [
-                                                'description' => $variable['description'] ?? '',
-                                                'user_editable' => $variable['user_editable'] ?? true,
-                                                'user_viewable' => $variable['user_viewable'] ?? true,
-                                                'rules' => $variable['rules'] ?? 'nullable|string',
+                                                'description' => $variable['description'],
+                                                'user_editable' => $variable['user_editable'],
+                                                'user_viewable' => $variable['user_viewable'],
+                                                'rules' => $variable['rules'],
                                             ];
                                         }
                                     }
@@ -202,13 +202,7 @@ class ServerResource extends Resource
                             ->visible(fn (callable $get) => !empty($get('egg')))
                             ->options(function (callable $get) {
                                 $eggId = $get('egg');
-                                if (!$eggId) {
-                                    return [];
-                                }
                                 $egg = Egg::find($eggId);
-                                if (!$egg) {
-                                    return [];
-                                }
                                 $dockerImages = $egg->docker_images;
                                 if (is_array($dockerImages)) {
                                     return array_combine($dockerImages, $dockerImages);
@@ -227,7 +221,7 @@ class ServerResource extends Resource
                                     ? data_get($livewire->record, 'egg_variables', [])
                                     : ($get('egg_variables') ?? []);
                                 $eggRecord = Egg::where('egg_id', $eggId)->first();
-                                $eggMetas = $eggRecord ? ($eggRecord->egg_variables ?? []) : [];
+                                $eggMetas = $eggRecord ? $eggRecord->egg_variables : [];
                                 $fields = [];
                                 $count = 0;
                                 foreach ($eggValues as $key => $value) {
@@ -235,11 +229,11 @@ class ServerResource extends Resource
                                         $meta = $eggMetas[$key];
                                     } else {
                                         $decode = is_array($eggMetas) ? $eggMetas : json_decode($eggMetas, true);
-                                        $meta = $decode[$count] ?? [];
+                                        $meta = $decode[$count];
                                     }
                                     $input = TextInput::make("egg_variables.{$key}")
                                         ->label($key)
-                                        ->hint(new TranslatorAPI()->translate($meta['description'] ?? '', 'en', request()->getPreferredLanguage()))
+                                        ->hint(new TranslatorAPI()->translate($meta['description'], 'en', request()->getPreferredLanguage()))
                                         ->default($value)
                                         ->reactive();
                                     if (isset($meta['user_viewable']) && !$meta['user_viewable']) {
@@ -280,7 +274,7 @@ class ServerResource extends Resource
                                 $totalCpu = 0;
                                 foreach ($servers as $server) {
                                     $limits = $server->limits;
-                                    $cpu = $limits['cpu'] ?? 0;
+                                    $cpu = $limits['cpu'];
                                     $totalCpu += $cpu;
                                 }
                                 $totalCpu = NumberConverter::convertCpuCore($totalCpu);
@@ -308,7 +302,7 @@ class ServerResource extends Resource
                                 $totalMemory = 0;
                                 foreach ($servers as $server) {
                                     $limits = $server->limits;
-                                    $memory = $limits['memory'] ?? 0;
+                                    $memory = $limits['memory'];
                                     $totalMemory += $memory;
                                 }
                                 $maxMemory = NumberConverter::convert($maxMemory, 'MiB', 'MB');
@@ -342,7 +336,7 @@ class ServerResource extends Resource
                                 $totalDisk = 0;
                                 foreach ($servers as $server) {
                                     $limits = $server->limits;
-                                    $disk = $limits['disk'] ?? 0;
+                                    $disk = $limits['disk'];
                                     $totalDisk += $disk;
                                 }
                                 $maxDisk = NumberConverter::convert($maxDisk, 'MiB', 'MB');

@@ -84,18 +84,21 @@ class UserResource extends Resource
                             ->label('最大CPU容量')
                             ->numeric()
                             ->suffix('コア')
+                            ->required()
                             ->formatStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convertCpuCore($state, true))
                             ->dehydrateStateUsing(fn ($state) => (int)$state === -1 ? -1 : NumberConverter::convertCpuCore($state, false)),
                         TextInput::make('max_memory')
                             ->label('最大メモリ容量')
                             ->numeric()
                             ->suffix('MB')
+                            ->required()
                             ->formatStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert($state, 'MiB', 'MB'))
                             ->dehydrateStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert($state, 'MB', 'MiB')),
                         TextInput::make('max_disk')
                             ->label('最大ディスク容量')
                             ->numeric()
                             ->suffix('MB')
+                            ->required()
                             ->formatStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert($state, 'MiB', 'MB'))
                             ->dehydrateStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert($state, 'MB', 'MiB')),
                     ])
@@ -117,9 +120,7 @@ class UserResource extends Resource
                             $record = $get('record') ?? null;
                             $limits = [];
                             if ($record) {
-                                $limits = is_array($record->resource_limits)
-                                    ? $record->resource_limits
-                                    : (json_decode($record->resource_limits, true) ?? []);
+                                $limits = $record->resource_limits;
                             }
                             $values = [];
                             foreach ($nodes as $node) {
@@ -128,9 +129,9 @@ class UserResource extends Resource
                                 $values[] = [
                                     'node_key'    => $nodeId,
                                     'node_name'   => $node->name,
-                                    'max_cpu'     => $nodeLimit['max_cpu'] ?? '',
-                                    'max_memory'  => $nodeLimit['max_memory'] ?? '',
-                                    'max_disk'    => $nodeLimit['max_disk'] ?? '',
+                                    'max_cpu'     => $nodeLimit['max_cpu'] ?? 0,
+                                    'max_memory'  => $nodeLimit['max_memory'] ?? 0,
+                                    'max_disk'    => $nodeLimit['max_disk'] ?? 0,
                                 ];
                             }
                             $set('resource_limits', $values);

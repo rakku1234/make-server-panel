@@ -46,23 +46,23 @@ class ServersImportPage extends Page
         $nodesData = [];
 
         if ($nodesResponse->successful()) {
-            $nodesData = $nodesResponse->json()['data'] ?? [];
+            $nodesData = $nodesResponse->json()['data'];
 
             foreach ($nodesData as $nodeItem) {
-                $attributes = $nodeItem['attributes'] ?? [];
+                $attributes = $nodeItem['attributes'];
                 if (isset($attributes['id']) && Node::where('node_id', $attributes['id'])->exists()) {
                     continue;
                 }
                 Node::create([
-                    'node_id'          => $attributes['id'] ?? '',
-                    'slug'             => $attributes['name'] ?? '',
-                    'uuid'             => $attributes['uuid'] ?? '',
-                    'name'             => $attributes['name'] ?? '',
-                    'description'      => $attributes['description'] ?? '',
-                    'maintenance_mode' => $attributes['maintenance_mode'] ?? false,
-                    'public'           => $attributes['public'] ?? false,
-                    'created_at'       => $attributes['created_at'] ?? '',
-                    'updated_at'       => $attributes['updated_at'] ?? '',
+                    'node_id'          => $attributes['id'],
+                    'slug'             => $attributes['name'],
+                    'uuid'             => $attributes['uuid'],
+                    'name'             => $attributes['name'],
+                    'description'      => $attributes['description'],
+                    'maintenance_mode' => $attributes['maintenance_mode'],
+                    'public'           => $attributes['public'],
+                    'created_at'       => $attributes['created_at'],
+                    'updated_at'       => $attributes['updated_at'],
                 ]);
             }
         }
@@ -78,20 +78,20 @@ class ServersImportPage extends Page
             $allocationsResponse = Http::withToken($apiToken)->get($allocationsApiUrl);
             if ($allocationsResponse->successful()) {
                 $data = $allocationsResponse->json();
-                $nodeAllocations = $data['data'] ?? [];
+                $nodeAllocations = $data['data'];
                 $allocationsData = array_merge($allocationsData, $nodeAllocations);
 
                 foreach ($nodeAllocations as $allocationItem) {
-                    $attributes = $allocationItem['attributes'] ?? [];
+                    $attributes = $allocationItem['attributes'];
                     if (isset($attributes['id']) && Allocation::where('port', $attributes['port'])->exists()) {
                         continue;
                     }
                     Allocation::create([
-                        'id'       => $attributes['id'] ?? '',
-                        'alias'    => $attributes['alias'] ?? '',
-                        'port'     => $attributes['port'] ?? 0,
-                        'assigned' => $attributes['assigned'] ?? false,
-                        'node_id'  => $attributes['node'] ?? $nodeId,
+                        'id'       => $attributes['id'],
+                        'alias'    => $attributes['alias'],
+                        'port'     => $attributes['port'],
+                        'assigned' => $attributes['assigned'],
+                        'node_id'  => $nodeId,
                         ]
                     );
                 }
@@ -105,11 +105,11 @@ class ServersImportPage extends Page
 
         if ($eggsResponse->successful()) {
             $data = $eggsResponse->json();
-            $eggsData = $data['data'] ?? [];
+            $eggsData = $data['data'];
 
             foreach ($eggsData as $eggItem) {
-                $attributes = $eggItem['attributes'] ?? [];
-                $dockerImages = $attributes['docker_images'] ?? [];
+                $attributes = $eggItem['attributes'];
+                $dockerImages = $attributes['docker_images'];
                 if (!is_array($dockerImages)) {
                     $dockerImages = [$dockerImages];
                 }
@@ -117,10 +117,10 @@ class ServersImportPage extends Page
                     continue;
                 }
                 Egg::create([
-                    'uuid'          => $attributes['uuid'] ?? '',
-                    'egg_id'        => $attributes['id'] ?? '',
-                    'name'          => $attributes['name'] ?? '',
-                    'description'   => $attributes['description'] ?? '',
+                    'uuid'          => $attributes['uuid'],
+                    'egg_id'        => $attributes['id'],
+                    'name'          => $attributes['name'],
+                    'description'   => $attributes['description'],
                     'docker_images' => $dockerImages,
                     'slug'          => $attributes['name'] ?? Str::random(10),
                     ]
@@ -134,10 +134,10 @@ class ServersImportPage extends Page
         $serversData = [];
 
         if ($serversResponse->successful()) {
-            $serversData = $serversResponse->json()['data'] ?? [];
+            $serversData = $serversResponse->json()['data'];
 
             foreach ($serversData as $serverItem) {
-                $attributes = $serverItem['attributes'] ?? [];
+                $attributes = $serverItem['attributes'];
 
                 if (isset($attributes['uuid']) && Server::where('uuid', $attributes['uuid'])->exists()) {
                     continue;
@@ -145,18 +145,18 @@ class ServersImportPage extends Page
                 try {
                     Server::create([
                     //'id'             => $attributes['id'],
-                    'limits'         => is_array($attributes['limits'] ?? null) ? $attributes['limits'] : [],
+                    'limits'         => $attributes['limits'],
                     'user'           => $attributes['user'],
                     'egg'            => $attributes['egg'],
-                    'feature_limits' => is_array($attributes['feature_limits'] ?? null) ? $attributes['feature_limits'] : [],
+                    'feature_limits' => $attributes['feature_limits'],
                     'status'         => $attributes['status'] ?? 'None',
                     'uuid'           => $attributes['uuid'],
                     'name'           => $attributes['name'],
                     'node'           => $attributes['node'],
-                    'description'    => $attributes['description'] ?? '',
+                    'description'    => $attributes['description'],
                     'allocation_id'  => $attributes['allocation'],
                     'docker_image'   => $attributes['container']['image'],
-                    'egg_variables'  => $attributes['container']['environment'] ?? null,
+                    'egg_variables'  => $attributes['container']['environment'],
                     'start_on_completion' => true,
                     'slug'           => $attributes['external_id'] ?? Str::random(10),
                     ]);

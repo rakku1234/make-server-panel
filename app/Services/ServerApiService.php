@@ -34,16 +34,16 @@ class ServerApiService
                 "default" => $server->allocation_id,
             ],
             "limits" => [
-                "memory" => $server->limits['memory'] ?? 0,
+                "memory" => $server->limits['memory'],
                 "swap"   => $server->limits['swap'] ?? -1,
-                "disk"   => $server->limits['disk'] ?? 0,
+                "disk"   => $server->limits['disk'],
                 "io"     => $server->limits['io'] ?? 500,
-                "cpu"    => $server->limits['cpu'] ?? 0,
+                "cpu"    => $server->limits['cpu'],
             ],
             "feature_limits" => [
-                "databases"   => $server->feature_limits['databases'] ?? 0,
-                "allocations" => $server->feature_limits['allocations'] ?? 0,
-                "backups"     => $server->feature_limits['backups'] ?? 0,
+                "databases"   => $server->feature_limits['databases'],
+                "allocations" => $server->feature_limits['allocations'],
+                "backups"     => $server->feature_limits['backups'],
             ],
         ];
 
