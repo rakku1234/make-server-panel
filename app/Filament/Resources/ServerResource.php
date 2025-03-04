@@ -33,7 +33,7 @@ use App\Services\TranslatorAPI;
 use App\Filament\Resources\ServerResource\Pages\EditServer;
 use App\Func\NumberConverter;
 use CodeWithDennis\SimpleAlert\Components\Forms\SimpleAlert;
-use TypeError;
+use JsonException;
 
 class ServerResource extends Resource
 {
@@ -172,11 +172,7 @@ class ServerResource extends Resource
                                     $dockerImages = is_array($egg->docker_images) ? $egg->docker_images : [];
                                     $images = array_values($dockerImages);
                                     $set('docker_image', count($images) > 0 ? $images[0] : null);
-                                    try {
-                                        $variables = json_decode($egg->egg_variables, true) ?? [];
-                                    } catch (TypeError $e) {
-                                        throw new TypeError('Egg variables is not a valid JSON');
-                                    }
+                                    $variables = json_decode($egg->egg_variables, true);
                                     $values = [];
                                     $metadata = [];
                                     foreach ($variables as $variable) {
