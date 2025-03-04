@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Pages\Auth\Login as BaseLogin;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse;
 use Filament\Notifications\Notification;
+use App\Models\User;
 
 class Login extends BaseLogin
 {
@@ -53,10 +54,11 @@ class Login extends BaseLogin
         unset($data['cf-turnstile-response']);
         $remember = $data['remember'] ?? false;
         unset($data['remember']);
+        $user = User::where('name', $data['name'])->first();
 
         if (Auth::guard(config('filament.auth.guard'))->attempt($data, $remember)) {
             activity()
-                ->causedBy($data['name'])
+                ->causedBy($user)
                 ->withProperties([
                     'level' => 'info',
                 ])

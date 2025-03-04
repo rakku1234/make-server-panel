@@ -149,7 +149,7 @@ class ServersImportPage extends Page
                     'user'           => $attributes['user'],
                     'egg'            => $attributes['egg'],
                     'feature_limits' => is_array($attributes['feature_limits'] ?? null) ? $attributes['feature_limits'] : [],
-                    'status'         => $attributes['status'],
+                    'status'         => $attributes['status'] ?? 'None',
                     'uuid'           => $attributes['uuid'],
                     'name'           => $attributes['name'],
                     'node'           => $attributes['node'],

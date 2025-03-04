@@ -33,6 +33,7 @@ use App\Services\TranslatorAPI;
 use App\Filament\Resources\ServerResource\Pages\EditServer;
 use App\Func\NumberConverter;
 use CodeWithDennis\SimpleAlert\Components\Forms\SimpleAlert;
+use TypeError;
 
 class ServerResource extends Resource
 {
@@ -60,14 +61,20 @@ class ServerResource extends Resource
         return $form
             ->schema([
                 SimpleAlert::make('suspendedAlert')
-                    ->title('このサーバーは現在禁止されています。')
+                    ->title('サーバーは現在禁止されています。')
                     ->description('管理者にお問い合わせください。')
                     ->warning()
                     ->columnSpanFull()
                     ->visible(fn (callable $get) => $get('status') === 'suspended'),
+                SimpleAlert::make('SettingResourceLimit')
+                    ->title('必要な設定が行われていません！')
+                    ->description('管理者にお問い合わせください。')
+                    ->danger()
+                    ->columnSpanFull()
+                    ->visible(fn () => auth()->user()->resource_limits === null),
 
                 Section::make('サーバー基本情報')
-                    ->description('ここでは、サーバーの基本情報を設定します。')
+                    ->description('サーバーの基本情報を設定します。')
                     ->collapsible()
                     ->schema([
                         TextInput::make('name')
@@ -90,7 +97,7 @@ class ServerResource extends Resource
                             ->columnSpanFull(),
                         Select::make('node')
                             ->label('ノード')
-                            ->hint('ノードは、サーバーが実行されるノードです')
+                            ->hint('サーバーが実行されるノードです')
                             ->options(function () {
                                 $query = Node::query();
                                 if (!auth()->user()->hasRole('admin')) {
@@ -102,7 +109,7 @@ class ServerResource extends Resource
                             ->reactive(),
                         Select::make('allocation_id')
                             ->label('割り当て')
-                            ->hint('割り当ては、サーバーのIPアドレスとポートです')
+                            ->hint('サーバーのIPアドレスとポートです')
                             ->reactive()
                             ->options(function (callable $get, $livewire) {
                                 $node = $get('node');
@@ -142,11 +149,11 @@ class ServerResource extends Resource
                     ]),
 
                 Section::make('Egg & Docker 設定')
-                    ->description('ここでは、サーバーのEggとDocker Imageを設定します。')
+                    ->description('サーバーのEggとDocker Imageを設定します。')
                     ->schema([
                         Select::make('egg')
                             ->label('Egg')
-                            ->hint('Eggは、サーバーのテンプレートです')
+                            ->hint('サーバーのテンプレートです')
                             ->options(function () {
                                 return (auth()->user()->hasRole('admin')
                                     ? Egg::all()
@@ -165,7 +172,11 @@ class ServerResource extends Resource
                                     $dockerImages = is_array($egg->docker_images) ? $egg->docker_images : [];
                                     $images = array_values($dockerImages);
                                     $set('docker_image', count($images) > 0 ? $images[0] : null);
-                                    $variables = json_decode($egg->egg_variables, true) ?? [];
+                                    try {
+                                        $variables = json_decode($egg->egg_variables, true) ?? [];
+                                    } catch (TypeError $e) {
+                                        throw new TypeError('Egg variables is not a valid JSON');
+                                    }
                                     $values = [];
                                     $metadata = [];
                                     foreach ($variables as $variable) {
@@ -191,7 +202,7 @@ class ServerResource extends Resource
                             ->required(),
                         Select::make('docker_image')
                             ->label('Docker Image')
-                            ->hint('Docker Imageは、サーバーのDocker Imageです')
+                            ->hint('Docker Image')
                             ->visible(fn (callable $get) => !empty($get('egg')))
                             ->options(function (callable $get) {
                                 $eggId = $get('egg');
@@ -255,17 +266,17 @@ class ServerResource extends Resource
                     ->visible(fn ($livewire) => $livewire instanceof CreateRecord),
 
                 Section::make('リソース設定')
-                    ->description('ここでは、サーバーのリソースを設定します。')
+                    ->description('サーバーのリソースを設定します。')
                     ->collapsible()
                     ->schema([
                         TextInput::make('limits.cpu')
-                            ->label('CPU制限')
+                            ->label('CPU')
                             ->hint('コア単位')
                             ->reactive()
                             ->minValue(1)
                             ->maxValue(function (callable $get) {
-                                $user = User::find(auth()->user()->panel_user_id);
-                                $maxCpu = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_cpu'] ?? null;
+                                $user = User::where('panel_user_id', auth()->user()->panel_user_id)->first();
+                                $maxCpu = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_cpu'];
                                 if ($maxCpu === -1) {
                                     return null;
                                 }
@@ -292,7 +303,7 @@ class ServerResource extends Resource
                             ->reactive()
                             ->minValue(1)
                             ->maxValue(function (callable $get) {
-                                $user = User::find(auth()->user()->panel_user_id);
+                                $user = User::where('panel_user_id', auth()->user()->panel_user_id)->first();
                                 $maxMemory = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_memory'] ?? null;
                                 if ($maxMemory === -1) {
                                     return null;
@@ -329,7 +340,7 @@ class ServerResource extends Resource
                             ->reactive()
                             ->minValue(1)
                             ->maxValue(function (callable $get) {
-                                $user = User::find(auth()->user()->panel_user_id);
+                                $user = User::where('panel_user_id', auth()->user()->panel_user_id)->first();
                                 $maxDisk = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_disk'] ?? null;
                                 $servers = Server::where('node', $get('node'))->get();
                                 $totalDisk = 0;
@@ -355,7 +366,7 @@ class ServerResource extends Resource
                             ->required(),
                         TagsInput::make('limits.threads')
                             ->label('CPUピニング')
-                            ->hint('CPUピニングをしたいコアを選択してください (わからない場合は空のままにしてください)')
+                            ->hint('コアを選択してください (わからない場合は空のままにしてください)')
                             ->placeholder('コアを指定')
                             ->disabled(),
                         TextInput::make('limits.io')
@@ -382,7 +393,7 @@ class ServerResource extends Resource
                     ->collapsible()
                     ->schema([
                         ToggleButtons::make('start_on_completion')
-                            ->label('インストール完了後に起動')
+                            ->label('自動起動')
                             ->hint('インストール完了後にサーバーを自動で起動します')
                             ->options([
                                 'true' => '有効',
@@ -413,10 +424,13 @@ class ServerResource extends Resource
                     ])
                     ->columns(2),
                 Hidden::make('user')
-                    ->default(fn () => auth()->user()->panel_user_id)
+                    ->default(fn () => auth()->id())
                     ->required(),
                 Hidden::make('slug')
                     ->default(fn (callable $get) => Str::slug($get('external_id') ?? Str::random()))
+                    ->required(),
+                Hidden::make('status')
+                    ->default('installing')
                     ->required(),
             ]);
     }
@@ -442,15 +456,13 @@ class ServerResource extends Resource
                         'suspended'  => 'danger',
                         default      => 'gray',
                     })
-                    ->formatStateUsing(function ($state) {
-                        return match ($state) {
-                            'installing' => 'インストール中',
-                            'starting'   => '起動中',
-                            'running'    => '実行中',
-                            'offline'    => '停止中',
-                            'suspended'  => '禁止中',
-                            default      => '不明',
-                        };
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'installing' => 'インストール中',
+                        'starting'   => '起動中',
+                        'running'    => '実行中',
+                        'offline'    => '停止中',
+                        'suspended'  => '禁止中',
+                        default      => '不明',
                     })
                     ->icon(fn (string $state): string => match ($state) {
                         'installing' => 'heroicon-s-arrow-path',
@@ -465,38 +477,28 @@ class ServerResource extends Resource
                     ->formatStateUsing(fn ($state, $record) => $state ?: $record->name),
                 TextColumn::make('limits.cpu')
                     ->label('CPU')
-                    ->formatStateUsing(function ($state) {
-                        if ($state === 0) {
-                            return '無制限';
-                        }
-                        return NumberConverter::convertCpuCore($state).' コア';
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        $state === 0 => '無制限',
+                        default => NumberConverter::convertCpuCore($state).' コア',
                     }),
                 TextColumn::make('limits.memory')
                     ->label('メモリ量')
-                    ->formatStateUsing(function ($state) {
-                        if (empty($state)) {
-                            return '無制限';
-                        }
-                        return NumberConverter::convert($state, 'MiB', auth()->user()->unit, true);
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        empty($state) => '無制限',
+                        default => NumberConverter::convert($state, 'MiB', auth()->user()->unit, true),
                     }),
                 TextColumn::make('limits.disk')
                     ->label('ディスク')
-                    ->formatStateUsing(function ($state) {
-                        if (empty($state)) {
-                            return '無制限';
-                        }
-                        return NumberConverter::convert($state, 'MiB', auth()->user()->unit, true);
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        empty($state) => '無制限',
+                        default => NumberConverter::convert($state, 'MiB', auth()->user()->unit, true),
                     }),
                 TextColumn::make('egg')
                     ->label('Egg名')
-                    ->formatStateUsing(function ($state, $record) {
-                        return Egg::where('egg_id', $record->egg)->first()->name ?? "Egg情報がありません (Egg: {$record->egg})";
-                    }),
+                    ->formatStateUsing(fn ($state, $record) => Egg::where('egg_id', $record->egg)->first()->name ?? "Egg情報がありません (Egg: {$record->egg})"),
                 TextColumn::make('node')
                     ->label('ノード')
-                    ->formatStateUsing(function ($state, $record) {
-                        return Node::where('node_id', $record->node)->first()->name ?? "ノード情報がありません (ノード: {$record->node})";
-                    }),
+                    ->formatStateUsing(fn ($state, $record) => Node::where('node_id', $record->node)->first()->name ?? "ノード情報がありません (ノード: {$record->node})"),
             ])
             ->filters([
                 SelectFilter::make('node')

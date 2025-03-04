@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Filament\Notifications\Notification;
 use App\Models\Server;
@@ -22,7 +23,7 @@ class ServerApiService
             "name"        => $server->name,
             /** @phpstan-ignore-next-line */
             "description" => $server?->description,
-            "user"        => $server->user,
+            "user"        => User::find($server->user)->panel_user_id,
             "egg"         => $server->egg,
             "slug"        => $server->slug,
             "environment" => $server->egg_variables,
