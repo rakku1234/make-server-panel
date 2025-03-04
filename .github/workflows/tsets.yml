@@ -121,7 +121,6 @@ jobs:
       - name: Run Laravel Tests
         run: php artisan test --testsuite=Feature
 
-
   test_sqlite:
     name: Laravel Test (SQLite)
     runs-on: ubuntu-latest
@@ -145,6 +144,9 @@ jobs:
         run: |
           mkdir -p database
           touch database/database.sqlite
+
+      - name: Run Database Migrations
+        run: php artisan migrate --seed --force
 
       - name: Run all Laravel Tests
         run: php artisan test
