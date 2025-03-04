@@ -1,0 +1,150 @@
+name: Database Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test_mysql:
+    name: Laravel Test (MySQL ${{ matrix.mysql_version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mysql_version: ['8.0', '8.4']
+    permissions:
+      pull-requests: read
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql_version }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Generate .env
+        run: |
+          php artisan app:setup
+          sed -i "s/DB_CONNECTION=.*/DB_CONNECTION=mysql/" .env
+          sed -i "s/DB_HOST=.*/DB_HOST=127.0.0.1/" .env
+          sed -i "s/DB_PORT=.*/DB_PORT=3306/" .env
+          sed -i "s/DB_DATABASE=.*/DB_DATABASE=test_db/" .env
+          if grep -q "^DB_USERNAME=" .env; then
+            sed -i "s/DB_USERNAME=.*/DB_USERNAME=root/" .env
+          else
+            echo "DB_USERNAME=root" >> .env
+          fi
+          if grep -q "^DB_PASSWORD=" .env; then
+            sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=root/" .env
+          else
+            echo "DB_PASSWORD=root" >> .env
+          fi
+
+      - name: Run Database Migrations
+        run: php artisan migrate --seed --force
+
+      - name: Run Laravel Tests
+        run: php artisan test --testsuite=Feature
+
+  test_mariadb:
+    name: Laravel Test (MariaDB ${{ matrix.mariadb_version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mariadb_version: ['10.5', '10.11', '11.4', '11.7']
+    permissions:
+      pull-requests: read
+    services:
+      mariadb:
+        image: mariadb:${{ matrix.mariadb_version }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mariadb-admin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Generate .env
+        run: |
+          php artisan app:setup
+          sed -i "s/DB_CONNECTION=.*/DB_CONNECTION=mysql/" .env
+          sed -i "s/DB_HOST=.*/DB_HOST=127.0.0.1/" .env
+          sed -i "s/DB_PORT=.*/DB_PORT=3306/" .env
+          sed -i "s/DB_DATABASE=.*/DB_DATABASE=test_db/" .env
+          if grep -q "^DB_USERNAME=" .env; then
+            sed -i "s/DB_USERNAME=.*/DB_USERNAME=root/" .env
+          else
+            echo "DB_USERNAME=root" >> .env
+          fi
+          if grep -q "^DB_PASSWORD=" .env; then
+            sed -i "s/DB_PASSWORD=.*/DB_PASSWORD=root/" .env
+          else
+            echo "DB_PASSWORD=root" >> .env
+          fi
+
+      - name: Run Database Migrations
+        run: php artisan migrate --seed --force
+
+      - name: Run Laravel Tests
+        run: php artisan test --testsuite=Feature
+
+
+  test_sqlite:
+    name: Laravel Test (SQLite)
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      - name: Install Composer Dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Configure environment
+        run: php artisan app:setup
+
+      - name: Create Database
+        run: |
+          mkdir -p database
+          touch database/database.sqlite
+
+      - name: Run all Laravel Tests
+        run: php artisan test

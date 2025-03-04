@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\EggsResource\Pages;
+namespace App\Filament\Resources\EggResource\Pages;
 
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\EggResource;
