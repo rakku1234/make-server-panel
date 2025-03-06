@@ -83,7 +83,9 @@ class ServersImportPage extends Page
 
                 foreach ($nodeAllocations as $allocationItem) {
                     $attributes = $allocationItem['attributes'];
-                    if (isset($attributes['id']) && Allocation::where('port', $attributes['port'])->exists()) {
+                    if (isset($attributes['port']) && Allocation::where('port', $attributes['port'])
+                        ->where('node_id', $nodeId)
+                        ->exists()) {
                         continue;
                     }
                     Allocation::create([
@@ -92,8 +94,7 @@ class ServersImportPage extends Page
                         'port'     => $attributes['port'],
                         'assigned' => $attributes['assigned'],
                         'node_id'  => $nodeId,
-                        ]
-                    );
+                    ]);
                 }
             }
         }
