@@ -25,12 +25,12 @@ class NumberConverter
             if ($fromUnit === 'MiB' && $toUnit === 'MB') {
                 $multiplier = bcdiv('1000', '1024', 10);
                 $result = bcmul((string)$value, $multiplier, 10);
-                $formattedResult = (float)bcround($result, $precision);
+                $formattedResult = phpversion() >= 8.4 ? bcround($result, $precision) : round($result, $precision);
                 return $includeUnit ? "{$formattedResult} MB" : $formattedResult;
             } elseif ($fromUnit === 'MB' && $toUnit === 'MiB') {
                 $multiplier = bcdiv('1024', '1000', 10);
                 $result = bcmul((string)$value, $multiplier, 10);
-                $formattedResult = (float)bcround($result, $precision);
+                $formattedResult = phpversion() >= 8.4 ? bcround($result, $precision) : round($result, $precision);
                 return $includeUnit ? "{$formattedResult} MiB" : $formattedResult;
             }
         }
@@ -61,7 +61,7 @@ class NumberConverter
             if (!isset($result)) {
                 $result = $bytes;
             }
-            $formattedResult = (float)bcround($result, $precision);
+            $formattedResult = phpversion() >= 8.4 ? bcround($result, $precision) : round($result, $precision);
             return $includeUnit ? "{$formattedResult} {$selectedUnit}" : $formattedResult;
         } elseif ($toUnit === 'iauto') {
             $selectedUnit = 'B';
@@ -75,11 +75,11 @@ class NumberConverter
             if (!isset($result)) {
                 $result = $bytes;
             }
-            $formattedResult = (float)bcround($result, $precision);
+            $formattedResult = phpversion() >= 8.4 ? bcround($result, $precision) : round($result, $precision);
             return $includeUnit ? "{$formattedResult} {$selectedUnit}" : $formattedResult;
         }
         $result = bcdiv($bytes, $units[$toUnit], 10);
-        $formattedResult = (float)bcround($result, $precision);
+        $formattedResult = phpversion() >= 8.4 ? bcround($result, $precision) : round($result, $precision);
         return $includeUnit ? "{$formattedResult} {$toUnit}" : $formattedResult;
     }
 
@@ -97,6 +97,6 @@ class NumberConverter
         $result = $isCore
             ? bcdiv((string)$value, '100', 10)
             : bcmul((string)$value, '100', 10);
-        return (float)bcround($result, $precision);
+        return phpversion() >= 8.4 ? bcround($result, $precision) : round($result, $precision);
     }
 }
