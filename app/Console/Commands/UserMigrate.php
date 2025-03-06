@@ -30,8 +30,7 @@ class UserMigrate extends Command
      */
     public function handle()
     {
-        $apiService = new ServerApiService();
-        $userlist = $apiService->getUserlist();
+        $userlist = (new ServerApiService())->getUserlist();
         if ($userlist === null) {
             $this->error('ユーザーリストの取得に失敗しました。');
             return;

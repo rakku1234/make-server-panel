@@ -34,8 +34,7 @@ class CreateServer extends CreateRecord
         DB::beginTransaction();
         /** @var Server $record */
         $record = parent::handleRecordCreation($data);
-        $apiService = new ServerApiService();
-        $res = $apiService->createServer($record);
+        $res = (new ServerApiService())->createServer($record);
         if ($res === null) {
             DB::rollBack();
             return $record;
@@ -58,7 +57,7 @@ class CreateServer extends CreateRecord
             ->success()
             ->send();
         if (config('discord-alerts.webhook_urls.default')) {
-            new DiscordAlert()->to(config('discord-alerts.webhook_urls.default'))
+            (new DiscordAlert())->to(config('discord-alerts.webhook_urls.default'))
             ->message("", [
                 [
                     "title" => "サーバー作成に成功しました",

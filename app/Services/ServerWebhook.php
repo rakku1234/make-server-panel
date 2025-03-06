@@ -46,7 +46,7 @@ class ServerWebhook
             $data['egg_variables_meta'] = [];
             Server::create($data);
         } catch (Exception $e) {
-            new DiscordAlert()->to(config('discord-alerts.webhook_urls.default'))
+            (new DiscordAlert())->to(config('discord-alerts.webhook_urls.default'))
             ->message('サーバー作成エラー', [
                 'title' => 'サーバー作成エラー',
                 'description' => $e->getMessage(),

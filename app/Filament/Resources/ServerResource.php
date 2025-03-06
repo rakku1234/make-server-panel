@@ -233,7 +233,7 @@ class ServerResource extends Resource
                                     }
                                     $input = TextInput::make("egg_variables.{$key}")
                                         ->label($key)
-                                        ->hint(new TranslatorAPI()->translate($meta['description'], 'en', request()->getPreferredLanguage()))
+                                        ->hint((new TranslatorAPI())->translate($meta['description'], 'en', request()->getPreferredLanguage()))
                                         ->default($value)
                                         ->reactive();
                                     if (isset($meta['user_viewable']) && !$meta['user_viewable']) {

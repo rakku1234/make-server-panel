@@ -148,7 +148,7 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('name')
                     ->label('ユーザー名')
-                    ->icon(fn ($record) => new AvatarsProvider()->get($record))
+                    ->icon(fn ($record) => (new AvatarsProvider())->get($record))
                     ->size(TextColumn\TextColumnSize::Large),
                 TextColumn::make('roles')
                     ->label('ロール')
