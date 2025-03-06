@@ -122,17 +122,20 @@ jobs:
         run: php artisan test --testsuite=Feature
 
   test_sqlite:
-    name: Laravel Test (SQLite)
+    name: Laravel Test (SQLite) PHP ${{ matrix.php-version }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.3', '8.4']
     permissions:
       pull-requests: read
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Setup PHP ${{ matrix.php-version }}
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: ${{ matrix.php-version }}
 
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
