@@ -36,8 +36,7 @@ return [
     ],
 
     'turnstile' => [
-        'sitekey' => env('TURNSTILE_SITEKEY'),
-        'secret' => env('TURNSTILE_SECRET'),
+        'TURNSTILE_SITE_ENABLE' => env('TURNSTILE_SITE_ENABLE'),
     ],
 
     'translator' => [

@@ -7,6 +7,7 @@ use Filament\Pages\Page;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
+use Filament\Forms\Components\Toggle;
 
 class Settings extends Page
 {
@@ -65,16 +66,21 @@ class Settings extends Page
                     ->hint('この設定は、パネルAPIのクライアントトークンです')
                     ->password()
                     ->revealable(),
-                TextInput::make('TURNSTILE_SITEKEY')
+                Toggle::make('TURNSTILE_SITE_ENABLE')
+                    ->label('Cloudflare Turnstileを有効にする')
+                    ->live(),
+                TextInput::make('TURNSTILE_SITE_KEY')
                     ->label('Cloudflare Turnstileサイトキー')
                     ->hint('この設定は、Cloudflare Turnstileのサイトキーです')
                     ->password()
-                    ->revealable(),
-                TextInput::make('TURNSTILE_SECRET')
+                    ->revealable()
+                    ->visible(fn () => $this->data['TURNSTILE_SITE_ENABLE']),
+                TextInput::make('TURNSTILE_SECRET_KEY')
                     ->label('Cloudflare Turnstileシークレットキー')
                     ->hint('この設定は、Cloudflare Turnstileのシークレットキーです')
                     ->password()
-                    ->revealable(),
+                    ->revealable()
+                    ->visible(fn () => $this->data['TURNSTILE_SITE_ENABLE']),
                 TextInput::make('TRANSLATOR_KEY')
                     ->label('翻訳キー')
                     ->hint('この設定は、翻訳キーです')
