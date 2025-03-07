@@ -1,8 +1,7 @@
 <x-filament-panels::page>
     <x-filament-panels::form wire:submit="save">
-        <?php /** @var App\Filament\Pages\Settings $this */ ?>
+        @php /** @var App\Filament\Pages\Settings $this */ @endphp
         {{ $this->form }}
-
         <x-filament-panels::form.actions 
             :actions="[
                 \Filament\Actions\Action::make('save')
