@@ -43,7 +43,7 @@ class Login extends BaseLogin
                             ->label('ログイン状態を保持する'),
                         Turnstile::make('captcha')
                             ->theme('auto')
-                            ->visible(config('services.turnstile.enabled')),
+                            ->visible((bool)config('services.turnstile.TURNSTILE_SITE_ENABLE')),
                     ])
                     ->statePath('data'),
             ),

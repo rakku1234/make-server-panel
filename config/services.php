@@ -36,7 +36,7 @@ return [
     ],
 
     'turnstile' => [
-        'TURNSTILE_SITE_ENABLE' => env('TURNSTILE_SITE_ENABLE'),
+        'TURNSTILE_SITE_ENABLE' => env('TURNSTILE_SITE_ENABLE', false),
     ],
 
     'translator' => [

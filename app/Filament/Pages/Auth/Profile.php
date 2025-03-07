@@ -41,6 +41,8 @@ class Profile extends BaseProfile implements HasForms
 
     public $google2fa_secret;
 
+    public $verification_code;
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
     protected static string $view = 'filament.pages.auth.profile';
@@ -117,7 +119,7 @@ class Profile extends BaseProfile implements HasForms
                         ->live(),
                     Placeholder::make('qr_code')
                         ->label('QRコード')
-                        ->visible(fn () => $this->google2fa_enabled)
+                        ->visible($this->google2fa_enabled)
                         ->content(function () {
                             $google2fa = new Google2FA();
                             $qrCodeUrl = $google2fa->getQRCodeUrl(
@@ -136,6 +138,11 @@ class Profile extends BaseProfile implements HasForms
                                 </div>'
                             );
                         }),
+                    TextInput::make('verification_code')
+                        ->label('認証コード')
+                        ->visible($this->google2fa_enabled && !auth()->user()->google2fa_secret)
+                        ->required($this->google2fa_enabled && !auth()->user()->google2fa_secret)
+                        ->numeric(),
                 ]),
             ]),
         ];
@@ -145,14 +152,37 @@ class Profile extends BaseProfile implements HasForms
     {
         $data = $this->form->getState();
         $user = auth()->user();
+
         if (isset($data['password'])) {
             $data['password'] = bcrypt($data['password']);
         } else {
             unset($data['password']);
         }
+
         if ($data['google2fa_enabled'] && !$user->google2fa_secret) {
+            if (empty($data['verification_code'])) {
+                Notification::make()
+                    ->title('認証コードを入力してください。')
+                    ->danger()
+                    ->send();
+                return;
+            }
+
+            $google2fa = new Google2FA();
+            $valid = $google2fa->verifyKey($this->google2fa_secret, $data['verification_code']);
+
+            if (!$valid) {
+                Notification::make()
+                    ->title('認証コードが正しくありません。')
+                    ->danger()
+                    ->send();
+                return;
+            }
+
             $data['google2fa_secret'] = $this->google2fa_secret;
         }
+
+        unset($data['verification_code']);
         $user->update($data);
         activity()
             ->causedBy($user)
