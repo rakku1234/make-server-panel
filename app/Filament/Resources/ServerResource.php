@@ -33,7 +33,6 @@ use App\Services\TranslatorAPI;
 use App\Filament\Resources\ServerResource\Pages\EditServer;
 use App\Func\NumberConverter;
 use CodeWithDennis\SimpleAlert\Components\Forms\SimpleAlert;
-use JsonException;
 
 class ServerResource extends Resource
 {
