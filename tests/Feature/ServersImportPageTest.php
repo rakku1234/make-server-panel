@@ -14,9 +14,9 @@ uses(RefreshDatabase::class);
 test('imports servers data successfully when authorized', function () {
     config(['panel.api_url' => 'http://panel.example.com']);
 
-    Permission::firstOrCreate(['name' => 'servers.import']);
+    Permission::firstOrCreate(['name' => 'server.import']);
     $user = User::factory()->create();
-    $user->givePermissionTo('servers.import');
+    $user->givePermissionTo('server.import');
     actingAs($user);
 
     $nodeId = rand(1, 100);
@@ -126,7 +126,7 @@ test('imports servers data successfully when authorized', function () {
 });
 
 test('rejects unauthorized access', function () {
-    Permission::firstOrCreate(['name' => 'servers.import',]);
+    Permission::firstOrCreate(['name' => 'server.import']);
     $user = User::factory()->create();
     actingAs($user);
     $this->withoutExceptionHandling();

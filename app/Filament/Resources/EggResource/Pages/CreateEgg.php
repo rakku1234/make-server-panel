@@ -11,7 +11,7 @@ class CreateEgg extends CreateRecord
 
     public function mount(): void
     {
-        if (!auth()->user()->can('eggs.create')) {
+        if (!auth()->user()->can('egg.create')) {
             abort(403);
         }
         parent::mount();

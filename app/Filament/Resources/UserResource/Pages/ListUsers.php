@@ -12,7 +12,7 @@ class ListUsers extends ListRecords
 
     public function mount(): void
     {
-        if (!auth()->user()->can('users.view')) {
+        if (!auth()->user()->can('user.view')) {
             abort(403);
         }
         parent::mount();

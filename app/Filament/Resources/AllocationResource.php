@@ -98,6 +98,6 @@ class AllocationResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasPermissionTo('allocations.view');
+        return auth()->check() && auth()->user()->hasPermissionTo('allocation.view');
     }
 }

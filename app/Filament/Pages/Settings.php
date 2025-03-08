@@ -74,13 +74,13 @@ class Settings extends Page
                     ->hint('この設定は、Cloudflare Turnstileのサイトキーです')
                     ->password()
                     ->revealable()
-                    ->visible(fn () => $this->data['TURNSTILE_SITE_ENABLE']),
+                    ->visible($this->data['TURNSTILE_SITE_ENABLE']),
                 TextInput::make('TURNSTILE_SECRET_KEY')
                     ->label('Cloudflare Turnstileシークレットキー')
                     ->hint('この設定は、Cloudflare Turnstileのシークレットキーです')
                     ->password()
                     ->revealable()
-                    ->visible(fn () => $this->data['TURNSTILE_SITE_ENABLE']),
+                    ->visible($this->data['TURNSTILE_SITE_ENABLE']),
                 TextInput::make('TRANSLATOR_KEY')
                     ->label('翻訳キー')
                     ->hint('この設定は、翻訳キーです')

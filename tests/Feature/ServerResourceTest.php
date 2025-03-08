@@ -43,21 +43,22 @@ function setupTestModels() {
     }
 
     $permissions = [
-        'servers.create',
-        'servers.edit',
-        'servers.delete',
-        'servers.view',
-        'servers.import',
-        'nodes.edit',
-        'nodes.view',
-        'eggs.edit',
-        'eggs.delete',
-        'eggs.view',
-        'allocations.view',
-        'users.create',
-        'users.edit',
-        'users.delete',
-        'users.view',
+        'server.create',
+        'server.edit',
+        'server.delete',
+        'server.view',
+        'server.import',
+        'node.edit',
+        'node.view',
+        'egg.edit',
+        'egg.create',
+        'egg.delete',
+        'egg.view',
+        'allocation.view',
+        'user.create',
+        'user.edit',
+        'user.delete',
+        'user.view',
     ];
 
     foreach ($permissions as $permission) {
@@ -68,7 +69,7 @@ function setupTestModels() {
     $userRole = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'web']);
 
     $adminRole->syncPermissions(Permission::all());
-    $userRole->syncPermissions(['servers.view']);
+    $userRole->syncPermissions(['server.view', 'server.create', 'server.delete']);
 
     $user = User::create([
         'name' => 'Test User',

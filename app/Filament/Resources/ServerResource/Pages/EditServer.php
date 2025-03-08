@@ -14,7 +14,7 @@ class EditServer extends EditRecord
 
     public function mount($record): void
     {
-        if (!auth()->user()->can('servers.edit')) {
+        if (!auth()->user()->can('server.edit')) {
             abort(403);
         }
         parent::mount($record);

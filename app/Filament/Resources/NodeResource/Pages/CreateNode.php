@@ -11,7 +11,7 @@ class CreateNode extends CreateRecord
 
     public function mount(): void
     {
-        if (!auth()->user()->can('nodes.create')) {
+        if (!auth()->user()->can('node.create')) {
             abort(403);
         }
     }

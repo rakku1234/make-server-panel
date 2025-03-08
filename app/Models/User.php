@@ -32,8 +32,8 @@ class User extends Authenticatable
         'lang',
         'created_at',
         'updated_at',
-        'google2fa_secret',
         'google2fa_enabled',
+        'google2fa_secret',
     ];
 
     /**

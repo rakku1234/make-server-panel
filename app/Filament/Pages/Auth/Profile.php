@@ -67,8 +67,7 @@ class Profile extends BaseProfile implements HasForms
         $this->lang = $user->lang;
         $this->google2fa_enabled = $user->google2fa_enabled;
         if (!$user->google2fa_secret) {
-            $google2fa = new Google2FA();
-            $this->google2fa_secret = $google2fa->generateSecretKey();
+            $this->google2fa_secret = (new Google2FA())->generateSecretKey();
         } else {
             $this->google2fa_secret = $user->google2fa_secret;
         }
@@ -121,15 +120,12 @@ class Profile extends BaseProfile implements HasForms
                         ->label('QRコード')
                         ->visible($this->google2fa_enabled)
                         ->content(function () {
-                            $google2fa = new Google2FA();
-                            $qrCodeUrl = $google2fa->getQRCodeUrl(
+                            $qrCodeUrl = (new Google2FA())->getQRCodeUrl(
                                 config('app.name'),
-                                auth()->user()->email,
+                                auth()->user()->name,
                                 $this->google2fa_secret
                             );
-                            $qrCode = new QrCode($qrCodeUrl);
-                            $writer = new PngWriter();
-                            $result = $writer->write($qrCode);
+                            $result = (new PngWriter())->write(new QrCode($qrCodeUrl));
                             return new HtmlString(
                         '<div class="space-y-2">
                                     <div class="flex justify-center">
@@ -168,8 +164,7 @@ class Profile extends BaseProfile implements HasForms
                 return;
             }
 
-            $google2fa = new Google2FA();
-            $valid = $google2fa->verifyKey($this->google2fa_secret, $data['verification_code']);
+            $valid = (new Google2FA())->verifyKey($this->google2fa_secret, $data['verification_code']);
 
             if (!$valid) {
                 Notification::make()

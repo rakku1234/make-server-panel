@@ -11,7 +11,7 @@ class ListNode extends ListRecords
 
     public function mount(): void
     {
-        if (!auth()->user()->can('nodes.view')) {
+        if (!auth()->user()->can('node.view')) {
             abort(403);
         }
         parent::mount();

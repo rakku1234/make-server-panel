@@ -18,7 +18,7 @@ class CreateServer extends CreateRecord
 
     public function mount(): void
     {
-        if (!auth()->user()->can('servers.create')) {
+        if (!auth()->user()->can('server.create')) {
             abort(403);
         }
         parent::mount();
@@ -74,7 +74,7 @@ class CreateServer extends CreateRecord
         $data = $this->form->getState();
         $data['start_on_completion'] = isset($data['start_on_completion']) ? 1 : 0;
         $record = $this->handleRecordCreation($data);
-        if (auth()->user()->can('servers.edit')) {
+        if (auth()->user()->can('server.edit')) {
             /** @var Server $record */
             $this->redirect(ServerResource::getUrl('edit', ['record' => $record->slug]));
         } else {

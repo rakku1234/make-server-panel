@@ -14,21 +14,22 @@ class create_role extends Seeder
     public function run(): void
     {
         $permissions = [
-            'servers.create',
-            'servers.edit',
-            'servers.delete',
-            'servers.view',
-            'servers.import',
-            'nodes.edit',
-            'nodes.view',
-            'eggs.edit',
-            'eggs.delete',
-            'eggs.view',
-            'allocations.view',
-            'users.create',
-            'users.edit',
-            'users.delete',
-            'users.view',
+            'server.create',
+            'server.edit',
+            'server.delete',
+            'server.view',
+            'server.import',
+            'node.edit',
+            'node.create',
+            'node.view',
+            'egg.edit',
+            'egg.delete',
+            'egg.view',
+            'allocation.view',
+            'user.create',
+            'user.edit',
+            'user.delete',
+            'user.view',
         ];
 
         foreach ($permissions as $permission) {
@@ -41,6 +42,6 @@ class create_role extends Seeder
 
         $admin->syncPermissions(Permission::all());
 
-        $user->syncPermissions(['servers.view']);
+        $user->syncPermissions(['server.view', 'server.create', 'server.delete']);
     }
 }

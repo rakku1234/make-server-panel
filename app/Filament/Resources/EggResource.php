@@ -80,6 +80,6 @@ class EggResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasPermissionTo('eggs.view');
+        return auth()->check() && auth()->user()->hasPermissionTo('egg.view');
     }
 }

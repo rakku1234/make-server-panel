@@ -82,6 +82,6 @@ class NodeResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasPermissionTo('nodes.view');
+        return auth()->check() && auth()->user()->hasPermissionTo('node.view');
     }
 }

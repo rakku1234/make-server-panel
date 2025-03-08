@@ -20,6 +20,8 @@ class Login extends BaseLogin
 
     public ?array $data = [];
 
+    public bool $show2fa = false;
+
     protected function getForms(): array
     {
         return [
@@ -33,11 +35,12 @@ class Login extends BaseLogin
                         TextInput::make('password')
                             ->label('パスワード')
                             ->password()
+                            ->revealable()
                             ->required()
                             ->autocomplete('current-password'),
                         TextInput::make('one_time_password')
                             ->label('認証コード')
-                            ->visible(fn () => User::where('name', $this->data['name'] ?? null)->first()?->google2fa_enabled)
+                            ->visible($this->show2fa)
                             ->reactive(),
                         Checkbox::make('remember')
                             ->label('ログイン状態を保持する'),
@@ -57,13 +60,24 @@ class Login extends BaseLogin
         if (Auth::guard(config('filament.auth.guard'))->attempt([
             'name' => $this->data['name'],
             'password' => $this->data['password']
-        ], $this->data['remember'] ?? false)) {
+        ], $this->data['remember'])) {
             if ($user->google2fa_enabled) {
-                if (empty($this->data['one_time_password'])) {
+                if (!$this->show2fa) {
+                    Auth::guard(config('filament.auth.guard'))->logout();
+                    $this->show2fa = true;
+                    $this->dispatch('reset-captcha');
                     return null;
                 }
-                $google2fa = new Google2FA();
-                $valid = $google2fa->verifyKey(
+                if (empty($this->data['one_time_password'])) {
+                    Auth::guard(config('filament.auth.guard'))->logout();
+                    Notification::make()
+                        ->title('認証コードが必要です')
+                        ->danger()
+                        ->send();
+                    $this->dispatch('reset-captcha');
+                    return null;
+                }
+                $valid = (new Google2FA())->verifyKey(
                     $user->google2fa_secret,
                     $this->data['one_time_password']
                 );
@@ -73,6 +87,7 @@ class Login extends BaseLogin
                         ->title('認証コードが無効です')
                         ->danger()
                         ->send();
+                    $this->dispatch('reset-captcha');
                     return null;
                 }
             }
@@ -91,6 +106,7 @@ class Login extends BaseLogin
             ->danger()
             ->send();
 
-        return app(LoginResponse::class);
+        $this->dispatch('reset-captcha');
+        return null;
     }
 }

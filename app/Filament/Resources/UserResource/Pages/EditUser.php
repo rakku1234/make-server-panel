@@ -12,7 +12,7 @@ class EditUser extends EditRecord
 
     public function mount($record): void
     {
-        if (!auth()->user()->can('users.edit')) {
+        if (!auth()->user()->can('user.edit')) {
             abort(403);
         }
         parent::mount($record);

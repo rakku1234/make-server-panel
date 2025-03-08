@@ -182,6 +182,6 @@ class UserResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasPermissionTo('users.view');
+        return auth()->check() && auth()->user()->hasPermissionTo('user.view');
     }
 }

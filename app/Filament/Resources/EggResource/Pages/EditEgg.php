@@ -16,7 +16,7 @@ class EditEgg extends EditRecord
 
     public function mount($record): void
     {
-        if (!auth()->user()->can('eggs.edit')) {
+        if (!auth()->user()->can('egg.edit')) {
             abort(403);
         }
         parent::mount($record);

@@ -13,32 +13,38 @@ test('login page is accessible', function () {
 });
 
 test('invalid credentials fail to login', function () {
-    config(['services.turnstile.secret' => '']);
+    config(['services.turnstile.TURNSTILE_SITE_ENABLE' => false]);
+    
     $response = $this->post('/admin/login', [
-        'name' => 'non-existent',
-        'password' => 'wrong-password',
+        'data' => [
+            'name' => 'non-existent',
+            'password' => 'wrong-password',
+            'remember' => false
+        ]
     ]);
-    $response->assertRedirect('/admin/login');
+    $response->assertRedirect('/');
 });
 
 test('valid credentials login', function () {
-    config(['services.turnstile.secret' => '']);
+    config(['services.turnstile.TURNSTILE_SITE_ENABLE' => false]);
+    
     $permissions = [
-        'servers.create',
-        'servers.edit',
-        'servers.delete',
-        'servers.view',
-        'servers.import',
-        'nodes.edit',
-        'nodes.view',
-        'eggs.edit',
-        'eggs.delete',
-        'eggs.view',
-        'allocations.view',
-        'users.create',
-        'users.edit',
-        'users.delete',
-        'users.view',
+        'server.create',
+        'server.edit',
+        'server.delete',
+        'server.view',
+        'server.import',
+        'node.edit',
+        'node.view',
+        'egg.edit',
+        'egg.create',
+        'egg.delete',
+        'egg.view',
+        'allocation.view',
+        'user.create',
+        'user.edit',
+        'user.delete',
+        'user.view',
     ];
 
     foreach ($permissions as $permission) {
@@ -50,10 +56,32 @@ test('valid credentials login', function () {
         'password' => Hash::make('secret'),
     ]);
 
+    $this->actingAs($user, config('filament.auth.guard'));
     $response = $this->post('/admin/login', [
-        'name'     => 'testuser',
+        'name' => 'testuser',
         'password' => 'secret',
+        'remember' => true,
     ]);
-    $response->assertRedirect();
-    $this->assertAuthenticatedAs($user, config('filament.auth.guard'));
+    $response->assertRedirect('/');
+    $this->assertAuthenticated(config('filament.auth.guard'));
+});
+
+test('2fa login requires verification code', function () {
+    config(['services.turnstile.TURNSTILE_SITE_ENABLE' => false]);
+    User::factory()->create([
+        'name' => 'testuser',
+        'password' => Hash::make('secret'),
+        'google2fa_enabled' => true,
+        'google2fa_secret' => 'TESTSECRET',
+    ]);
+    
+    $response = $this->post('/admin/login', [
+        'data' => [
+            'name' => 'testuser',
+            'password' => 'secret',
+            'remember' => false
+        ]
+    ]);
+    $response->assertRedirect('/');
+    $this->assertGuest();
 });

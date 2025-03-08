@@ -19,7 +19,7 @@ class EditNode extends EditRecord
 
     public function mount($record): void
     {
-        if (!auth()->user()->can('servers.edit')) {
+        if (!auth()->user()->can('node.edit')) {
             abort(403);
         }
         parent::mount($record);

@@ -12,7 +12,7 @@ class ListEgg extends ListRecords
 
     public function mount(): void
     {
-        if (!auth()->user()->can('eggs.view')) {
+        if (!auth()->user()->can('egg.view')) {
             abort(403);
         }
         parent::mount();

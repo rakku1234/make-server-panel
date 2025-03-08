@@ -13,7 +13,7 @@ class ListServer extends ListRecords
 
     public function mount(): void
     {
-        if (!auth()->user()->can('servers.view')) {
+        if (!auth()->user()->can('server.view')) {
             abort(403);
         }
         parent::mount();

@@ -31,7 +31,7 @@ class ServersImportPage extends Page
 
     public function mount(): void
     {
-        if (!auth()->user()->hasPermissionTo('servers.import')) {
+        if (!auth()->user()->hasPermissionTo('server.import')) {
             abort(403);
         }
     }
@@ -177,6 +177,6 @@ class ServersImportPage extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasPermissionTo('servers.import');
+        return auth()->check() && auth()->user()->hasPermissionTo('server.import');
     }
 }

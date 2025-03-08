@@ -507,10 +507,10 @@ class ServerResource extends Resource
             ->actions([
                 Actions\EditAction::make()
                     ->label('編集')
-                    ->visible(fn () => auth()->user()->hasPermissionTo('servers.edit')),
+                    ->visible(fn () => auth()->user()->hasPermissionTo('server.edit')),
                 Actions\DeleteAction::make()
                     ->label('削除')
-                    ->visible(fn () => auth()->user()->hasPermissionTo('servers.delete'))
+                    ->visible(fn () => auth()->user()->hasPermissionTo('server.delete'))
                     ->action(function ($record) {
                         DeleteServerJob::dispatch($record->uuid);
                         activity()
@@ -537,6 +537,6 @@ class ServerResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && auth()->user()->hasPermissionTo('servers.view');
+        return auth()->check() && auth()->user()->hasPermissionTo('server.view');
     }
 }

@@ -11,7 +11,7 @@ class CreateUser extends CreateRecord
 
     public function mount(): void
     {
-        if (!auth()->user()->can('users.create')) {
+        if (!auth()->user()->can('user.create')) {
             abort(403);
         }
         parent::mount();

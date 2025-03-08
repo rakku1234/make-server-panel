@@ -12,7 +12,7 @@ class ListAllocation extends ListRecords
 
     public function mount(): void
     {
-        if (!auth()->user()->can('allocations.view')) {
+        if (!auth()->user()->can('allocation.view')) {
             abort(403);
         }
         parent::mount();
