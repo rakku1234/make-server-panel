@@ -10,6 +10,6 @@ class AvatarsProvider implements Contracts\AvatarProvider
 {
     public function get(Model|Authenticatable $record): string
     {
-        return 'https://www.gravatar.com/avatar/'.hash('sha256', strtolower(trim($record->getAttribute('email') ?? ''))).'?d=wavatar';
+        return 'https://www.gravatar.com/avatar/'.hash('sha256', strtolower(trim($record->getAttribute('email'))));
     }
 }

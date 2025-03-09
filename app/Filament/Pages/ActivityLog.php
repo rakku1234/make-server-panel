@@ -24,7 +24,7 @@ class ActivityLog extends Page implements HasTable
 
     protected static ?string $navigationLabel = 'アクティビティログ';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
 
     public function table(Table $table): Table
     {

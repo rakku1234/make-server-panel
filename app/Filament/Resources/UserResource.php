@@ -85,22 +85,22 @@ class UserResource extends Resource
                             ->numeric()
                             ->suffix('コア')
                             ->required()
-                            ->formatStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convertCpuCore($state, true))
-                            ->dehydrateStateUsing(fn ($state) => (int)$state === -1 ? -1 : NumberConverter::convertCpuCore($state, false)),
+                            ->formatStateUsing(fn ($state) => $state === null ? null : ($state === -1 ? -1 : NumberConverter::convertCpuCore($state)))
+                            ->dehydrateStateUsing(fn ($state) => (int)$state === -1 ? -1 : NumberConverter::convertCpuCore((float)$state, false)),
                         TextInput::make('max_memory')
                             ->label('最大メモリ容量')
                             ->numeric()
                             ->suffix('MB')
                             ->required()
-                            ->formatStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert($state, 'MiB', 'MB'))
-                            ->dehydrateStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert($state, 'MB', 'MiB')),
+                            ->formatStateUsing(fn ($state) => $state === null ? null : ($state === -1 ? -1 : NumberConverter::convert($state, 'MiB', 'MB')))
+                            ->dehydrateStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert((float)$state, 'MB', 'MiB')),
                         TextInput::make('max_disk')
                             ->label('最大ディスク容量')
                             ->numeric()
                             ->suffix('MB')
                             ->required()
-                            ->formatStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert($state, 'MiB', 'MB'))
-                            ->dehydrateStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert($state, 'MB', 'MiB')),
+                            ->formatStateUsing(fn ($state) => $state === null ? null : ($state === -1 ? -1 : NumberConverter::convert($state, 'MiB', 'MB')))
+                            ->dehydrateStateUsing(fn ($state) => $state === -1 ? -1 : NumberConverter::convert((float)$state, 'MB', 'MiB')),
                     ])
                     ->columns(3)
                     ->afterStateHydrated(function (callable $set, callable $get) {
@@ -108,11 +108,21 @@ class UserResource extends Resource
                         $nodes = Node::all();
                         if (!empty($current)) {
                             foreach ($current as $index => $row) {
-                                if (isset($row['node_key'])) {
+                                if ($row['node_key'] !== null) {
                                     $node = $nodes->firstWhere('node_id', $row['node_key']);
                                     if ($node) {
                                         $current[$index]['node_name'] = $node->name;
                                     }
+                                } else {
+                                    $values = [];
+                                    foreach ($nodes as $node) {
+                                        $values[] = [
+                                            'node_key' => $node->node_id,
+                                            'node_name' => $node->name,
+                                        ];
+                                    }
+                                    $set('resource_limits', $values);
+                                    return;
                                 }
                             }
                             $set('resource_limits', $current);
@@ -125,7 +135,7 @@ class UserResource extends Resource
                             $values = [];
                             foreach ($nodes as $node) {
                                 $nodeId = $node->node_id;
-                                $nodeLimit = isset($limits[$nodeId]) && is_array($limits[$nodeId]) ? $limits[$nodeId] : [];
+                                $nodeLimit = $limits[$nodeId] ?? [];
                                 $values[] = [
                                     'node_key'    => $nodeId,
                                     'node_name'   => $node->name,

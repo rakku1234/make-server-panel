@@ -112,20 +112,13 @@ class ServerResource extends Resource
                             ->reactive()
                             ->options(function (callable $get, $livewire) {
                                 $node = $get('node');
-                                if (!$node) {
-                                    return [];
-                                }
-                                $query = Allocation::query();
-                                $query->where('node_id', $node);
+                                $query = Allocation::where('node_id', $node);
                                 if ($livewire instanceof EditServer) {
                                     $allocationId = $get('allocation_id');
-                                    $query->where(function ($query) use ($allocationId) {
-                                        $query->where('assigned', false)
-                                            ->where('id', $allocationId);
-                                        if (!auth()->user()->hasRole('admin')) {
-                                            $query->where('public', true);
-                                        }
-                                    });
+                                    $query->where('id', $allocationId)->orWhere('assigned', false);
+                                    if (!auth()->user()->hasRole('admin')) {
+                                        $query->where('public', true);
+                                    }
                                 } else {
                                     $query->where('assigned', false);
                                     if (!auth()->user()->hasRole('admin')) {
@@ -154,10 +147,11 @@ class ServerResource extends Resource
                             ->label('Egg')
                             ->hint('サーバーのテンプレートです')
                             ->options(function () {
-                                return (auth()->user()->hasRole('admin')
-                                    ? Egg::all()
-                                    : Egg::where('public', true)->get())
-                                    ->pluck('name', 'egg_id');
+                                $query = Egg::query()->select(['egg_id', 'name']);
+                                if (!auth()->user()->hasRole('admin')) {
+                                    $query->where('public', true);
+                                }
+                                return $query->pluck('name', 'egg_id');
                             })
                             ->reactive()
                             ->afterStateUpdated(function ($state, callable $set) {
@@ -216,20 +210,17 @@ class ServerResource extends Resource
                         Group::make()
                             ->schema(function (callable $get, $livewire) {
                                 $eggId = $get('egg') ?? ($livewire instanceof EditServer ? data_get($livewire->record, 'egg') : null);
-                                $eggValues = $livewire instanceof EditServer
-                                    ? data_get($livewire->record, 'egg_variables', [])
-                                    : ($get('egg_variables') ?? []);
+                                $eggValues = $livewire instanceof EditServer ? data_get($livewire->record, 'egg_variables', []) : ($get('egg_variables') ?? []);
                                 $eggRecord = Egg::where('egg_id', $eggId)->first();
                                 $eggMetas = $eggRecord ? $eggRecord->egg_variables : [];
                                 $fields = [];
+                                $decode = is_array($eggMetas) ? $eggMetas : json_decode($eggMetas, true);
                                 $count = 0;
                                 foreach ($eggValues as $key => $value) {
-                                    if (isset($eggMetas[$key])) {
-                                        $meta = $eggMetas[$key];
-                                    } else {
-                                        $decode = is_array($eggMetas) ? $eggMetas : json_decode($eggMetas, true);
-                                        $meta = $decode[$count];
+                                    if (!isset($decode[$count])) {
+                                        continue;
                                     }
+                                    $meta = $decode[$count];
                                     $input = TextInput::make("egg_variables.{$key}")
                                         ->label($key)
                                         ->hint((new TranslatorAPIService())->translate($meta['description'], 'en', request()->getPreferredLanguage()))
@@ -507,10 +498,10 @@ class ServerResource extends Resource
             ->actions([
                 Actions\EditAction::make()
                     ->label('編集')
-                    ->visible(fn () => auth()->user()->hasPermissionTo('server.edit')),
+                    ->visible(auth()->user()->hasPermissionTo('server.edit')),
                 Actions\DeleteAction::make()
                     ->label('削除')
-                    ->visible(fn () => auth()->user()->hasPermissionTo('server.delete'))
+                    ->visible(auth()->user()->hasPermissionTo('server.delete'))
                     ->action(function ($record) {
                         DeleteServerJob::dispatch($record->uuid);
                         activity()
@@ -520,9 +511,6 @@ class ServerResource extends Resource
                             ])
                             ->log('サーバーを削除します');
                     }),
-                /*Actions\ViewAction::make()
-                    ->label('コンソール')
-                    ->url(fn () => url(config('panel.api_url').'/server/')),*/
             ]);
     }
 

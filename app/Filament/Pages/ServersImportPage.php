@@ -148,7 +148,6 @@ class ServersImportPage extends Page
                 }
                 try {
                     Server::create([
-                    //'id'             => $attributes['id'],
                     'limits'         => $attributes['limits'],
                     'user'           => $attributes['user'],
                     'egg'            => $attributes['egg'],

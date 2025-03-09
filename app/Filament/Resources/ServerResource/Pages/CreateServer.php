@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ServerResource\Pages;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use App\Models\Allocation;
@@ -11,6 +12,7 @@ use App\Models\Server;
 use App\Services\ServerApiService;
 use App\Filament\Resources\ServerResource;
 use Spatie\DiscordAlerts\DiscordAlert;
+use Exception;
 
 class CreateServer extends CreateRecord
 {
@@ -34,10 +36,11 @@ class CreateServer extends CreateRecord
         DB::beginTransaction();
         /** @var Server $record */
         $record = parent::handleRecordCreation($data);
-        $res = (new ServerApiService())->createServer($record);
-        if ($res === null) {
+        try {
+            $res = (new ServerApiService())->createServer($record);
+        } catch (Exception $e) {
             DB::rollBack();
-            return $record;
+            throw $e;
         }
         Allocation::query()->where('id', $record->getAttribute('allocation_id'))->update(['assigned' => 1]);
         $record->update([
@@ -73,7 +76,17 @@ class CreateServer extends CreateRecord
     {
         $data = $this->form->getState();
         $data['start_on_completion'] = isset($data['start_on_completion']) ? 1 : 0;
-        $record = $this->handleRecordCreation($data);
+        try {
+            $record = $this->handleRecordCreation($data);
+        } catch (Exception $e) {
+            Log::error($e->getMessage());
+            Notification::make()
+                ->title($e->getMessage())
+                ->danger()
+                ->send();
+            $this->redirect(ServerResource::getUrl('index'));
+            return;
+        }
         if (auth()->user()->can('server.edit')) {
             /** @var Server $record */
             $this->redirect(ServerResource::getUrl('edit', ['record' => $record->slug]));

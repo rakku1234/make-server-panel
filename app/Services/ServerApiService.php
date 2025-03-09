@@ -7,14 +7,15 @@ use Filament\Notifications\Notification;
 use App\Models\Server;
 use App\Models\Allocation;
 use App\Models\User;
+use Exception;
 
 final class ServerApiService
 {
-    public function createServer(Server $server): ?array
+    public function createServer(Server $server): array
     {
         $allocation = Allocation::find($server->allocation_id);
         if (!$allocation) {
-            return null;
+            throw new Exception('Allocation not found');
         }
 
         $data = [
@@ -60,7 +61,7 @@ final class ServerApiService
                 'server' => $response->json(),
             ];
         } else {
-            return null;
+            throw new Exception('Server creation failed');
         }
     }
 
