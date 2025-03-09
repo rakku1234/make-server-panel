@@ -66,7 +66,7 @@ class Settings extends Page
                     ->hint('この設定は、パネルAPIのクライアントトークンです')
                     ->password()
                     ->revealable(),
-                Toggle::make('TURNSTILE_SITE_ENABLE')
+                Toggle::make('TURNSTILE_ENABLE')
                     ->label('Cloudflare Turnstileを有効にする')
                     ->live(),
                 TextInput::make('TURNSTILE_SITE_KEY')
@@ -74,13 +74,13 @@ class Settings extends Page
                     ->hint('この設定は、Cloudflare Turnstileのサイトキーです')
                     ->password()
                     ->revealable()
-                    ->visible($this->data['TURNSTILE_SITE_ENABLE']),
+                    ->visible($this->data['TURNSTILE_ENABLE']),
                 TextInput::make('TURNSTILE_SECRET_KEY')
                     ->label('Cloudflare Turnstileシークレットキー')
                     ->hint('この設定は、Cloudflare Turnstileのシークレットキーです')
                     ->password()
                     ->revealable()
-                    ->visible($this->data['TURNSTILE_SITE_ENABLE']),
+                    ->visible($this->data['TURNSTILE_ENABLE']),
                 TextInput::make('TRANSLATOR_KEY')
                     ->label('翻訳キー')
                     ->hint('この設定は、翻訳キーです')
