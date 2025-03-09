@@ -114,7 +114,10 @@ class ServersImportPage extends Page
                 if (!is_array($dockerImages)) {
                     $dockerImages = [$dockerImages];
                 }
-                if (isset($attributes['uuid']) && Egg::where('uuid', $attributes['uuid'])->exists()) {
+                if (isset($attributes['uuid']) && (
+                    Egg::where('uuid', $attributes['uuid'])->exists() ||
+                    Egg::where('egg_id', $attributes['id'])->exists()
+                )) {
                     continue;
                 }
                 Egg::create([
