@@ -12,7 +12,7 @@ use App\Models\Egg;
 use App\Func\NumberConverter;
 use Exception;
 
-final class ServerWebhook
+final class SyncWebhookService
 {
     public function SyncNodeCreate(array$data): void
     {

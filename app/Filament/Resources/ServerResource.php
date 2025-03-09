@@ -29,7 +29,7 @@ use App\Models\Server;
 use App\Models\Node;
 use App\Models\User;
 use App\Jobs\DeleteServerJob;
-use App\Services\TranslatorAPI;
+use App\Services\TranslatorAPIService;
 use App\Filament\Resources\ServerResource\Pages\EditServer;
 use App\Func\NumberConverter;
 use CodeWithDennis\SimpleAlert\Components\Forms\SimpleAlert;
@@ -232,7 +232,7 @@ class ServerResource extends Resource
                                     }
                                     $input = TextInput::make("egg_variables.{$key}")
                                         ->label($key)
-                                        ->hint((new TranslatorAPI())->translate($meta['description'], 'en', request()->getPreferredLanguage()))
+                                        ->hint((new TranslatorAPIService())->translate($meta['description'], 'en', request()->getPreferredLanguage()))
                                         ->default($value)
                                         ->reactive();
                                     if (isset($meta['user_viewable']) && !$meta['user_viewable']) {
