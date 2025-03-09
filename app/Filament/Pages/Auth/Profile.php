@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Auth;
 
+use Illuminate\Support\HtmlString;
 use Filament\Pages\Auth\EditProfile as BaseProfile;
 use Filament\Notifications\Notification;
 use Filament\Pages\Actions\Action;
@@ -19,7 +20,6 @@ use DateTimeZone;
 use PragmaRX\Google2FA\Google2FA;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
-use Illuminate\Support\HtmlString;
 
 class Profile extends BaseProfile implements HasForms
 {

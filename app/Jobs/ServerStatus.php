@@ -5,8 +5,8 @@ namespace App\Jobs;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Http;
-use App\Models\Server;
 use Illuminate\Foundation\Bus\Dispatchable;
+use App\Models\Server;
 
 class ServerStatus implements ShouldQueue
 {

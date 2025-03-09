@@ -30,10 +30,10 @@ class User extends Authenticatable
         'resource_limits',
         'unit',
         'lang',
-        'created_at',
-        'updated_at',
         'google2fa_enabled',
         'google2fa_secret',
+        'created_at',
+        'updated_at',
     ];
 
     /**

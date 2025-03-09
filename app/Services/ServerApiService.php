@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Filament\Notifications\Notification;
 use App\Models\Server;
 use App\Models\Allocation;
+use App\Models\User;
 
-class ServerApiService
+final class ServerApiService
 {
     public function createServer(Server $server): ?array
     {

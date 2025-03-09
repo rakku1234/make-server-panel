@@ -48,7 +48,7 @@ test('valid credentials login', function () {
     ];
 
     foreach ($permissions as $permission) {
-        Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web']);
+        Permission::firstOrCreate(['name' => $permission]);
     }
 
     $user = User::factory()->create([
@@ -74,7 +74,6 @@ test('2fa login requires verification code', function () {
         'google2fa_enabled' => true,
         'google2fa_secret' => 'TESTSECRET',
     ]);
-    
     $response = $this->post('/admin/login', [
         'data' => [
             'name' => 'testuser',
