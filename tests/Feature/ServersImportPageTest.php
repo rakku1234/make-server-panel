@@ -93,7 +93,7 @@ test('imports servers data successfully when authorized', function () {
                             'io' => rand(100, 500),
                             'cpu' => rand(50, 300)
                         ],
-                        'user' => rand(1, 10),
+                        'user' => $user->id,
                         'egg' => $eggId,
                         'feature_limits' => [
                             'databases' => rand(0, 5),
