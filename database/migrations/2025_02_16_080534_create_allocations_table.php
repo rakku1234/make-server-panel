@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('allocations', function (Blueprint $table) {
             $table->unsignedBigInteger('id')->primary();
+            $table->unsignedBigInteger('node_id');
             $table->string('alias');
             $table->integer('port');
             $table->boolean('assigned');
-            $table->unsignedBigInteger('node_id');
+            $table->boolean('public')->default(true);
             $table->timestamps();
         });
     }

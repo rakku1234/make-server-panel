@@ -21,6 +21,7 @@ return new class extends Migration
             $table->json('docker_images')->nullable();
             $table->json('egg_variables')->nullable();
             $table->string('slug')->nullable()->unique();
+            $table->boolean('public')->default(true);
             $table->timestamps();
         });
     }

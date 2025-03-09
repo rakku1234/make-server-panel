@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('servers', function (Blueprint $table) {
             $table->id();
 
-            $table->uuid('uuid')->unique();
+            $table->uuid('uuid')->unique()->nullable();
             $table->string('name');
             $table->string('slug')->unique();
             $table->integer('sort_order')->nullable();
