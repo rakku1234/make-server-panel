@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('allocations', function (Blueprint $table) {
-            $table->unsignedBigInteger('id')->primary();
-            $table->unsignedBigInteger('node_id');
+            $table->unsignedInteger('id')->primary();
+            $table->unsignedInteger('node_id');
             $table->string('alias');
             $table->integer('port');
             $table->boolean('assigned');

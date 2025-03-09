@@ -17,18 +17,18 @@ return new class extends Migration
             $table->uuid('uuid')->unique()->nullable();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->integer('sort_order')->nullable();
+            $table->unsignedInteger('sort_order')->nullable();
             $table->text('description')->nullable();
 
             $table->string('status')->default('');
-            $table->string('external_id')->nullable();
-            $table->unsignedBigInteger('allocation_id');
-            $table->unsignedBigInteger('node');
+            $table->string('external_id')->nullable()->unique();
+            $table->unsignedInteger('allocation_id');
+            $table->unsignedInteger('node');
             $table->boolean('start_on_completion')->default(true);
             $table->string('docker_image');
 
-            $table->unsignedBigInteger('user');
-            $table->unsignedBigInteger('egg');
+            $table->unsignedInteger('user');
+            $table->unsignedInteger('egg');
 
             $table->json('limits');
             $table->json('feature_limits');
