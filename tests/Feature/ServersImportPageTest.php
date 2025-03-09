@@ -23,7 +23,7 @@ test('imports servers data successfully when authorized', function () {
     $nodeName = 'Node-' . Str::random(8);
     $nodeUuid = Str::uuid()->toString();
 
-    $allocationId = rand(1, 100);
+    $allocationId = rand(1000, 100000);
     $allocationPort = rand(1000, 9999);
 
     $eggId = rand(1, 100);
