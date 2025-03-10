@@ -147,13 +147,12 @@ class ServerResource extends Resource
                             ->label('Egg')
                             ->hint('サーバーのテンプレートです')
                             ->options(function () {
-                                $query = Egg::query()->select(['egg_id', 'name']);
+                                $query = Egg::select(['egg_id', 'name']);
                                 if (!auth()->user()->hasRole('admin')) {
                                     $query->where('public', true);
                                 }
                                 return $query->pluck('name', 'egg_id');
                             })
-                            ->reactive()
                             ->afterStateUpdated(function ($state, callable $set) {
                                 $query = Egg::query();
                                 $query->where('egg_id', $state);
@@ -188,6 +187,7 @@ class ServerResource extends Resource
                                     $set('docker_image', null);
                                 }
                             })
+                            ->reactive()
                             ->required(),
                         Select::make('docker_image')
                             ->label('Docker Image')

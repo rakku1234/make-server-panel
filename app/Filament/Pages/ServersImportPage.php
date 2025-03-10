@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Filament\Pages\Page;
+use Filament\Forms\Form;
+use Filament\Forms\Components\Actions\Action;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Placeholder;
+use Filament\Support\Enums\Alignment;
 use Filament\Notifications\Notification;
 use App\Models\Server;
 use App\Models\Egg;
@@ -34,6 +39,29 @@ class ServersImportPage extends Page
         if (!auth()->user()->hasPermissionTo('server.import')) {
             abort(403);
         }
+    }
+
+    public function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Section::make('サーバー情報の取り込み')
+                    ->description('取り込み処理を開始する場合は、以下のボタンをクリックしてください。')
+                    ->schema([
+                        Placeholder::make('import_result')
+                            ->content($this->importResult)
+                            ->visible($this->importResult !== null)
+                            ->extraAttributes(['class' => 'p-4 rounded bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-600 text-green-800 dark:text-green-100']),
+                    ])
+                    ->footerActions([
+                        Action::make('import')
+                            ->label('取り込み開始')
+                            ->color('primary')
+                            ->action('importServersFromPelican')
+                            ->visible($this->importResult === null),
+                    ])
+                    ->footerActionsAlignment(Alignment::End),
+            ]);
     }
 
     public function importServersFromPelican(): void
