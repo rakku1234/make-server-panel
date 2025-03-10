@@ -17,13 +17,9 @@ use CodeWithDennis\SimpleAlert\Components\Forms\SimpleAlert;
 class NodeResource extends Resource
 {
     protected static ?string $model = Node::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-server';
-
     protected static ?string $navigationLabel = 'ノード';
-
     protected static ?int $navigationSort = 1;
-
     protected static ?string $navigationGroup = 'サーバー管理';
 
     public static function form(Form $form): Form

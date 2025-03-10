@@ -48,7 +48,7 @@ final class ServerApiService
             ],
         ];
 
-        $response = Http::withToken(config('panel.api_token'))
+        $response = Http::withToken(config('panel.api_application_token'))
             ->withHeaders([
                 'Content-Type' => 'application/json',
                 'Accept'       => 'application/json',
@@ -77,7 +77,7 @@ final class ServerApiService
     {
         $server = Server::find($serverid);
         $apiUrl = config('panel.api_url')."/api/application/servers/{$serverid}";
-        $response = Http::withToken(config('panel.api_token'))
+        $response = Http::withToken(config('panel.api_application_token'))
             ->withHeaders(['Accept' => 'application/json'])
             ->delete($apiUrl);
 
@@ -110,7 +110,7 @@ final class ServerApiService
     public function getUserlist(): ?array
     {
         $apiUrl = config('panel.api_url').'/api/application/users';
-        $response = Http::withToken(config('panel.api_token'))
+        $response = Http::withToken(config('panel.api_application_token'))
             ->withHeaders(['Accept' => 'application/json'])
             ->get($apiUrl);
         if ($response->successful()) {
@@ -122,7 +122,7 @@ final class ServerApiService
     public function getServer(string $uuid): ?array
     {
         $apiUrl = config('panel.api_url')."/api/application/servers";
-        $response = Http::withToken(config('panel.api_token'))
+        $response = Http::withToken(config('panel.api_application_token'))
             ->withHeaders(['Accept' => 'application/json'])
             ->get($apiUrl);
         if ($response->successful()) {

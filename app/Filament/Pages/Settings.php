@@ -8,19 +8,15 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Select;
 
 class Settings extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-
     protected static string $view = 'filament.pages.settings';
-
     protected static ?string $navigationLabel = '設定';
-
     protected static ?string $navigationGroup = 'パネル管理';
-
     protected static ?int $navigationSort = 3;
-
     public ?array $data = [];
 
     public function getTitle(): string
@@ -48,22 +44,17 @@ class Settings extends Page
         return $form
             ->schema([
                 TextInput::make('APP_NAME')
-                    ->label('アプリケーション名')
-                    ->hint('この設定は、アプリケーションの名前です'),
+                    ->label('アプリケーション名'),
                 TextInput::make('APP_URL')
-                    ->label('アプリケーションURL')
-                    ->hint('この設定は、アプリケーションのURLです'),
+                    ->label('アプリケーションURL'),
                 TextInput::make('PANEL_API_URL')
-                    ->label('パネルAPI URL')
-                    ->hint('この設定は、パネルAPIのURLです'),
-                TextInput::make('PANEL_API_TOKEN')
-                    ->label('パネルAPIトークン')
-                    ->hint('この設定は、パネルAPIのトークンです')
+                    ->label('パネルAPI URL'),
+                TextInput::make('PANEL_API_APPLICATION_TOKEN')
+                    ->label('パネルAPIアプリケーショントークン')
                     ->password()
                     ->revealable(),
                 TextInput::make('PANEL_API_CLIENT_TOKEN')
                     ->label('パネルAPIクライアントトークン')
-                    ->hint('この設定は、パネルAPIのクライアントトークンです')
                     ->password()
                     ->revealable(),
                 Toggle::make('TURNSTILE_ENABLE')
@@ -71,27 +62,29 @@ class Settings extends Page
                     ->live(),
                 TextInput::make('TURNSTILE_SITE_KEY')
                     ->label('Cloudflare Turnstileサイトキー')
-                    ->hint('この設定は、Cloudflare Turnstileのサイトキーです')
                     ->password()
                     ->revealable()
                     ->visible($this->data['TURNSTILE_ENABLE']),
                 TextInput::make('TURNSTILE_SECRET_KEY')
                     ->label('Cloudflare Turnstileシークレットキー')
-                    ->hint('この設定は、Cloudflare Turnstileのシークレットキーです')
                     ->password()
                     ->revealable()
                     ->visible($this->data['TURNSTILE_ENABLE']),
+                Select::make('TRANSLATOR_SERVICE')
+                    ->label('翻訳サービス')
+                    ->options([
+                        'Microsoft' => 'Microsoft',
+                        'DeepL' => 'DeepL',
+                    ]),
                 TextInput::make('TRANSLATOR_KEY')
                     ->label('翻訳キー')
-                    ->hint('この設定は、翻訳キーです')
                     ->password()
                     ->revealable(),
                 TextInput::make('TRANSLATOR_REGION')
-                    ->hint('この設定は、翻訳リージョンです')
-                    ->label('翻訳リージョン'),
+                    ->label('翻訳リージョン')
+                    ->visible($this->data['TRANSLATOR_SERVICE'] === 'Microsoft'),
                 TextInput::make('DISCORD_WEBHOOK_URL')
                     ->label('Discord Webhook URL')
-                    ->hint('この設定は、Discordに通知を送信するためのWebhook URLです')
                     ->password()
                     ->revealable(),
             ])

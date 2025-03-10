@@ -21,13 +21,9 @@ use Spatie\Permission\Models\Role;
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
-
     protected static ?string $navigationLabel = 'ユーザー';
-
     protected static ?string $navigationGroup = 'ユーザー管理';
-
     protected static ?int $navigationSort = 1;
-
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
     public static function form(Form $form): Form

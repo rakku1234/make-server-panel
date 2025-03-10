@@ -24,27 +24,16 @@ use Endroid\QrCode\Writer\PngWriter;
 class Profile extends BaseProfile implements HasForms
 {
     use InteractsWithForms;
-
     public $name;
-
     public $email;
-
     public $password;
-
     public $timezone;
-
     public $unit;
-
     public $lang;
-
     public $google2fa_enabled;
-
     public $google2fa_secret;
-
     public $verification_code;
-
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-
     protected static string $view = 'filament.pages.auth.profile';
 
     protected function getActions(): array

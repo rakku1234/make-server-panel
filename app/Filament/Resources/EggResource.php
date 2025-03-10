@@ -16,13 +16,9 @@ use App\Models\Egg;
 class EggResource extends Resource
 {
     protected static ?string $model = Egg::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-adjustments-horizontal';
-
     protected static ?string $navigationLabel = 'Egg';
-
     protected static ?string $navigationGroup = 'サーバー管理';
-
     protected static ?int $navigationSort = 3;
 
     public static function canCreate(): bool

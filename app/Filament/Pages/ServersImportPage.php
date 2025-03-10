@@ -21,17 +21,11 @@ use Exception;
 class ServersImportPage extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
-
     protected static string $view = 'filament.pages.servers-import-page';
-
     protected static ?string $title = 'サーバー情報の取り込み';
-
     protected static ?string $navigationLabel = 'サーバー情報の取り込み';
-
     protected static ?string $navigationGroup = 'パネル管理';
-
     protected static ?int $navigationSort = 2;
-
     public ?string $importResult = null;
 
     public function mount(): void
@@ -49,6 +43,7 @@ class ServersImportPage extends Page
                     ->description('取り込み処理を開始する場合は、以下のボタンをクリックしてください。')
                     ->schema([
                         Placeholder::make('import_result')
+                            ->label('取り込み結果')
                             ->content($this->importResult)
                             ->visible($this->importResult !== null)
                             ->extraAttributes(['class' => 'p-4 rounded bg-green-100 dark:bg-green-900 border border-green-300 dark:border-green-600 text-green-800 dark:text-green-100']),
@@ -66,7 +61,7 @@ class ServersImportPage extends Page
 
     public function importServersFromPelican(): void
     {
-        $apiToken = config('panel.api_token');
+        $apiToken = config('panel.api_application_token');
 
         $nodesApiUrl = config('panel.api_url').'/api/application/nodes';
         $nodesResponse = Http::withToken($apiToken)->get($nodesApiUrl);

@@ -37,13 +37,9 @@ use CodeWithDennis\SimpleAlert\Components\Forms\SimpleAlert;
 class ServerResource extends Resource
 {
     protected static ?string $model = Server::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-server-stack';
-
     protected static ?string $navigationLabel = 'サーバー';
-
     protected static ?string $navigationGroup = 'サーバー管理';
-
     protected static ?int $navigationSort = 2;
 
     public static function getEloquentQuery(): Builder
@@ -223,7 +219,7 @@ class ServerResource extends Resource
                                     $meta = $decode[$count];
                                     $input = TextInput::make("egg_variables.{$key}")
                                         ->label($key)
-                                        ->hint((new TranslatorAPIService())->translate($meta['description'], 'en', request()->getPreferredLanguage()))
+                                        ->hint((new TranslatorAPIService($meta['description'], 'en', request()->getPreferredLanguage()))->translatedText)
                                         ->default($value)
                                         ->reactive();
                                     if (isset($meta['user_viewable']) && !$meta['user_viewable']) {

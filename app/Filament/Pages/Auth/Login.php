@@ -17,9 +17,7 @@ use Coderflex\FilamentTurnstile\Forms\Components\Turnstile;
 class Login extends BaseLogin
 {
     protected static string $view = 'filament.pages.auth.Login';
-
     public ?array $data = [];
-
     public bool $show2fa = false;
 
     protected function getForms(): array
