@@ -6,6 +6,7 @@ namespace App\Filament\Resources;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Group;
@@ -22,6 +23,7 @@ use Filament\Tables\Actions;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Notifications\Notification;
 use App\Filament\Resources\ServerResource\Pages;
 use App\Models\Allocation;
 use App\Models\Egg;
@@ -33,6 +35,7 @@ use App\Services\TranslatorAPIService;
 use App\Filament\Resources\ServerResource\Pages\EditServer;
 use App\Func\NumberConverter;
 use CodeWithDennis\SimpleAlert\Components\Forms\SimpleAlert;
+use TypeError;
 
 class ServerResource extends Resource
 {
@@ -66,7 +69,7 @@ class ServerResource extends Resource
                     ->description('管理者にお問い合わせください。')
                     ->danger()
                     ->columnSpanFull()
-                    ->visible(fn () => auth()->user()->resource_limits === null),
+                    ->visible(auth()->user()->resource_limits === null),
 
                 Section::make('サーバー基本情報')
                     ->description('サーバーの基本情報を設定します。')
@@ -160,7 +163,18 @@ class ServerResource extends Resource
                                     $dockerImages = is_array($egg->docker_images) ? $egg->docker_images : [];
                                     $images = array_values($dockerImages);
                                     $set('docker_image', count($images) > 0 ? $images[0] : null);
-                                    $variables = json_decode($egg->egg_variables, true);
+                                    try {
+                                        $variables = json_decode($egg->egg_variables, true);
+                                    } catch (TypeError $e) {
+                                        Log::error($e);
+                                        Notification::make()
+                                            ->title('エラーが発生しました')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->persistent()
+                                            ->send();
+                                        return redirect()->to('/admin/servers');
+                                    }
                                     $values = [];
                                     $metadata = [];
                                     foreach ($variables as $variable) {
@@ -208,7 +222,7 @@ class ServerResource extends Resource
                                 $eggId = $get('egg') ?? ($livewire instanceof EditServer ? data_get($livewire->record, 'egg') : null);
                                 $eggValues = $livewire instanceof EditServer ? data_get($livewire->record, 'egg_variables', []) : ($get('egg_variables') ?? []);
                                 $eggRecord = Egg::where('egg_id', $eggId)->first();
-                                $eggMetas = $eggRecord ? $eggRecord->egg_variables : [];
+                                $eggMetas = $eggRecord ? ($eggRecord->egg_variables ?? []) : [];
                                 $fields = [];
                                 $decode = is_array($eggMetas) ? $eggMetas : json_decode($eggMetas, true);
                                 $count = 0;
@@ -400,7 +414,7 @@ class ServerResource extends Resource
                     ])
                     ->columns(2),
                 Hidden::make('user')
-                    ->default(fn () => auth()->id())
+                    ->default(auth()->id())
                     ->required(),
                 Hidden::make('slug')
                     ->default(fn (callable $get) => Str::slug($get('external_id') ?? Str::random()))
