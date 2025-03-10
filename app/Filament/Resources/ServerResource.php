@@ -165,7 +165,7 @@ class ServerResource extends Resource
                                     $set('docker_image', count($images) > 0 ? $images[0] : null);
                                     try {
                                         $variables = json_decode($egg->egg_variables, true);
-                                    } catch (TypeError $e) {
+                                    } catch (TypeError $e) { /** @phpstan-ignore-line */
                                         Log::error($e);
                                         Notification::make()
                                             ->title('エラーが発生しました')
