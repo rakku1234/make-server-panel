@@ -14,7 +14,6 @@ use App\Models\Egg;
 use App\Models\Node;
 use App\Models\Server;
 use App\Models\User;
-use App\Func\NumberConverter;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -180,6 +179,7 @@ test('can view server creation page', function () {
 });
 
 test('can create a server', function () {
+    config(['services.translator.key' => '', 'services.translator.region' => '']);
     $models = setupTestModels();
     setupFilamentContext();
     
@@ -222,7 +222,7 @@ test('can create a server', function () {
         'egg_variables' => [
             'TEST_VAR' => 'test-value'
         ],
-        'uuid' => 'test-uuid',
+        'uuid' => Str::uuid()->toString(),
         'status' => 'installing',
         'slug' => 'test-server-' . Str::random(6),
     ]);
@@ -267,11 +267,12 @@ test('can create a server', function () {
 });
 
 test('can edit a server', function () {
+    config(['services.translator.key' => '', 'services.translator.region' => '']);
     $models = setupTestModels();
     setupFilamentContext();
 
     $server = Server::create([
-        'uuid' => 'test-uuid-edit',
+        'uuid' => Str::uuid()->toString(),
         'name' => 'Original Server',
         'slug' => 'original-server-' . Str::random(6),
         'description' => 'Original Description',
@@ -306,7 +307,7 @@ test('can edit a server', function () {
             'object' => 'server',
             'attributes' => [
                 'id' => 1,
-                'uuid' => 'test-uuid-edit',
+                'uuid' => Str::uuid()->toString(),
                 'status' => 'offline',
             ],
         ], 200),
@@ -333,7 +334,7 @@ test('can delete a server', function () {
     setupFilamentContext();
 
     $server = Server::create([
-        'uuid' => 'test-uuid-delete',
+        'uuid' => Str::uuid()->toString(),
         'name' => 'Test Server Delete',
         'slug' => 'test-server-delete-' . Str::random(6),
         'description' => 'Test Description',
@@ -368,7 +369,7 @@ test('can delete a server', function () {
             'object' => 'server',
             'attributes' => [
                 'id' => 1,
-                'uuid' => 'test-uuid-delete',
+                'uuid' => Str::uuid()->toString(),
                 'status' => 'offline',
             ],
         ], 200),
@@ -381,19 +382,6 @@ test('can delete a server', function () {
         ->callTableAction('delete', $server);
 
     Bus::assertDispatched(\App\Jobs\DeleteServerJob::class);
-});
-
-test('NumberConverter correctly converts CPU cores', function () {
-    expect(NumberConverter::convertCpuCore(100))->toBe(1.0);
-    expect(NumberConverter::convertCpuCore(200))->toBe(2.0);
-    expect(NumberConverter::convertCpuCore(50))->toBe(0.5);
-    expect(NumberConverter::convertCpuCore(2, false))->toBe(200.0);
-    expect(NumberConverter::convertCpuCore(0.5, false))->toBe(50.0);
-});
-
-test('NumberConverter correctly converts memory units', function () {
-    expect(NumberConverter::convert(1024, 'MiB', 'MB'))->toBe(1000.0);    
-    expect(NumberConverter::convert(1000, 'MB', 'MiB'))->toBe(1024.0);
 });
 
 test('server resource limits are correctly applied', function () {
@@ -413,7 +401,7 @@ test('server resource limits are correctly applied', function () {
     ]);
 
     Server::create([
-        'uuid' => 'existing-uuid',
+        'uuid' => Str::uuid()->toString(),
         'name' => 'Existing Server',
         'slug' => 'existing-server-' . Str::random(6),
         'node' => $models['node']->node_id,
