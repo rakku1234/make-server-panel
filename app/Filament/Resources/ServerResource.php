@@ -132,10 +132,6 @@ class ServerResource extends Resource
                                     })
                                     ->toArray();
                             })
-                            ->getOptionLabelUsing(function ($value) {
-                                $allocation = Allocation::find($value);
-                                return $allocation ? "{$allocation->alias}:{$allocation->port}" : $value;
-                            })
                             ->required(),
                     ]),
 
@@ -171,7 +167,6 @@ class ServerResource extends Resource
                                             ->title('エラーが発生しました')
                                             ->body($e->getMessage())
                                             ->danger()
-                                            ->persistent()
                                             ->send();
                                         return redirect()->to('/admin/servers');
                                     }

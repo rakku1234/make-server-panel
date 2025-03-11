@@ -4,13 +4,14 @@ namespace App\Filament\Resources;
 
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Tables\Actions;
 use Filament\Tables\Table;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Hidden;
+use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use App\Models\Node;
@@ -31,19 +32,25 @@ class UserResource extends Resource
         return $form
             ->schema([
                 TextInput::make('name')
+                    ->label('ユーザー名')
                     ->required(),
                 TextInput::make('email')
+                    ->label('メールアドレス')
                     ->email()
                     ->required(),
                 TextInput::make('password')
+                    ->label('パスワード')
                     ->password()
-                    ->dehydrated(fn ($state) => filled($state))
-                    ->label('パスワード'),
+                    ->required(fn ($livewire) => $livewire instanceof CreateRecord)
+                    ->dehydrated(fn ($state) => filled($state)),
                 Select::make('roles')
-                    ->relationship('roles', 'name')
+                    ->label('ロール')
                     ->preload()
-                    ->label('ロール'),
+                    ->relationship('roles', 'name'),
                 Select::make('permissions')
+                    ->label('パーミッション')
+                    ->preload()
+                    ->reactive()
                     ->multiple()
                     ->relationship('permissions', 'name', function ($query, callable $get) {
                         $query->whereIn('id', function ($subquery) {
@@ -51,7 +58,7 @@ class UserResource extends Resource
                                      ->from('role_has_permissions');
                         });
                         $selectedRoles = $get('roles');
-                        if ($selectedRoles) {
+                        if (is_array($selectedRoles)) {
                             $excludedPermissionIds = Role::whereIn('id', $selectedRoles)
                                 ->with('permissions')
                                 ->get()
@@ -64,10 +71,7 @@ class UserResource extends Resource
                             }
                         }
                         return $query;
-                    })
-                    ->preload()
-                    ->reactive()
-                    ->label('パーミッション'),
+                    }),
 
                 Repeater::make('resource_limits')
                     ->label('ノードごとのリソース制限')
@@ -168,11 +172,11 @@ class UserResource extends Resource
                     ->timezone(auth()->user()->timezone),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

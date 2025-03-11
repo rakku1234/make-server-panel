@@ -40,7 +40,7 @@ class DeleteServerJob implements ShouldQueue
         DB::transaction(function () use ($serverApiService) {
             $server = $serverApiService->getServer($this->uuid);
             if (isset($server['id'])) {
-                $serverApiService->deleteServer($server['id']);
+                $serverApiService->DeleteServer($server['id']);
                 $serverModel = Server::where('uuid', $this->uuid)->first();
                 if ($serverModel) {
                     Allocation::where('id', $serverModel->allocation_id)->update(['assigned' => 0]);

@@ -13,22 +13,17 @@ return new class extends Migration
     {
         Schema::table('allocations', function (Blueprint $table) {
             $table->foreign('node_id')
-                  ->references('node_id')->on('nodes')
-                  ->onDelete('cascade');
+                  ->references('node_id')->on('nodes');
         });
         Schema::table('servers', function (Blueprint $table) {
             $table->foreign('node')
-                  ->references('node_id')->on('nodes')
-                  ->onDelete('cascade');
+                  ->references('node_id')->on('nodes');
             $table->foreign('egg')
-                  ->references('egg_id')->on('eggs')
-                  ->onDelete('cascade');
+                  ->references('egg_id')->on('eggs');
             $table->foreign('user')
-                  ->references('id')->on('users')
-                  ->onDelete('cascade');
+                  ->references('id')->on('users');
             $table->foreign('allocation_id')
-                  ->references('id')->on('allocations')
-                  ->onDelete('cascade');
+                  ->references('id')->on('allocations');
         });
     }
 

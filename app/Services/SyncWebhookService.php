@@ -25,7 +25,7 @@ final class SyncWebhookService
             $data['maintenance_mode'] = $data[0]['maintenance_mode'];
             Node::create($data);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 
@@ -35,7 +35,7 @@ final class SyncWebhookService
             $node = Node::where('uuid', $data[0]['uuid'])->firstOrFail();
             $node->deleteOrFail();
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 
@@ -50,7 +50,7 @@ final class SyncWebhookService
             $data['assigned'] = false;
             Allocation::create($data);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 
@@ -60,7 +60,7 @@ final class SyncWebhookService
             $allocation = Allocation::where('node_id', $data[0]['node_id'])->where('id', $data[0]['id'])->firstOrFail();
             $allocation->deleteOrFail();
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 
@@ -75,7 +75,7 @@ final class SyncWebhookService
             $data['public'] = true;
             Egg::create($data);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 
@@ -85,7 +85,7 @@ final class SyncWebhookService
             $egg = Egg::where('egg_id', $data[0]['id'])->firstOrFail();
             $egg->deleteOrFail();
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 
@@ -119,7 +119,7 @@ final class SyncWebhookService
             $data['egg_variables_meta'] = [];
             Server::create($data);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 
@@ -129,12 +129,16 @@ final class SyncWebhookService
             $server = Server::where('uuid', $data[0]['uuid'])->firstOrFail();
             $server->deleteOrFail();
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 
     public function SyncUserCreate(array $data): void
     {
+        $user = User::where('panel_user_id', $data[0]['id'])->first();
+        if ($user) {
+            return;
+        }
         try {
             $data['panel_user_id'] = $data[0]['id'];
             $data['name'] = $data[0]['username'];
@@ -144,17 +148,20 @@ final class SyncWebhookService
             $data['timezone'] = $data[0]['timezone'];
             User::create($data);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 
     public function SyncUserDelete(array $data): void
     {
+        $user = User::where('panel_user_id', $data[0]['id'])->first();
+        if (!$user) {
+            return;
+        }
         try {
-            $user = User::where('panel_user_id', $data[0]['id'])->firstOrFail();
             $user->deleteOrFail();
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
         }
     }
 }

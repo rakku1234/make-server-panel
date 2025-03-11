@@ -34,7 +34,7 @@ return [
     ],
 
     'translator' => [
-        'service' => env('TRANSLATOR_SERVICE'),
+        'service' => env('TRANSLATOR_SERVICE', ''),
         'key' => env('TRANSLATOR_KEY'),
         'region' => env('TRANSLATOR_REGION'),
     ],

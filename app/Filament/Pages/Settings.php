@@ -75,18 +75,19 @@ class Settings extends Page
                     ->options([
                         'Microsoft' => 'Microsoft',
                         'DeepL' => 'DeepL',
-                    ]),
+                    ])
+                    ->live(),
                 TextInput::make('TRANSLATOR_KEY')
                     ->label('翻訳キー')
                     ->password()
-                    ->revealable(),
+                    ->revealable()
+                    ->visible($this->data['TRANSLATOR_SERVICE']),
                 TextInput::make('TRANSLATOR_REGION')
                     ->label('翻訳リージョン')
                     ->visible($this->data['TRANSLATOR_SERVICE'] === 'Microsoft'),
                 TextInput::make('DISCORD_WEBHOOK_URL')
                     ->label('Discord Webhook URL')
-                    ->password()
-                    ->revealable(),
+                    ->password(),
             ])
             ->statePath('data');
     }

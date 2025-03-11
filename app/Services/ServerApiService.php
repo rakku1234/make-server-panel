@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Filament\Notifications\Notification;
 use App\Models\Server;
 use App\Models\Allocation;
@@ -11,7 +12,7 @@ use Exception;
 
 final class ServerApiService
 {
-    public function createServer(Server $server): array
+    public function CreateServer(Server $server): array
     {
         $allocation = Allocation::find($server->allocation_id);
         if (!$allocation) {
@@ -53,6 +54,8 @@ final class ServerApiService
                 'Content-Type' => 'application/json',
                 'Accept'       => 'application/json',
             ])
+            ->connectTimeout(5)
+            ->timeout(20)
             ->post(config('panel.api_url').'/api/application/servers', $data);
 
         if ($response->successful()) {
@@ -65,7 +68,7 @@ final class ServerApiService
         }
     }
 
-    public function updateServer(Server $server): void
+    public function UpdateServer(Server $server): void
     {
         Notification::make()
             ->title('まだこの機能は実装されていません。')
@@ -73,12 +76,14 @@ final class ServerApiService
             ->send();
     }
 
-    public function deleteServer(int $serverid): bool
+    public function DeleteServer(int $serverid): bool
     {
         $server = Server::find($serverid);
         $apiUrl = config('panel.api_url')."/api/application/servers/{$serverid}";
         $response = Http::withToken(config('panel.api_application_token'))
             ->withHeaders(['Accept' => 'application/json'])
+            ->connectTimeout(5)
+            ->timeout(20)
             ->delete($apiUrl);
 
         if ($response->successful()) {
@@ -107,11 +112,30 @@ final class ServerApiService
         }
     }
 
+    public function CreateUser(User $user): array
+    {
+        $apiUrl = config('panel.api_url').'/api/application/users';
+        $response = Http::withToken(config('panel.api_application_token'))
+            ->withHeaders(['Accept' => 'application/json'])
+            ->connectTimeout(5)
+            ->timeout(20)
+            ->post($apiUrl, [
+                'email' => $user->email,
+                'username' => $user->name,
+            ]);
+        if ($response->successful()) {
+            return $response->json();
+        }
+        throw new Exception($response->json()['errors'][0]['detail']);
+    }
+
     public function getUserlist(): ?array
     {
         $apiUrl = config('panel.api_url').'/api/application/users';
         $response = Http::withToken(config('panel.api_application_token'))
             ->withHeaders(['Accept' => 'application/json'])
+            ->connectTimeout(5)
+            ->timeout(20)
             ->get($apiUrl);
         if ($response->successful()) {
             return $response->json();
@@ -124,6 +148,8 @@ final class ServerApiService
         $apiUrl = config('panel.api_url')."/api/application/servers";
         $response = Http::withToken(config('panel.api_application_token'))
             ->withHeaders(['Accept' => 'application/json'])
+            ->connectTimeout(5)
+            ->timeout(20)
             ->get($apiUrl);
         if ($response->successful()) {
             $servers = $response->json()['data'];

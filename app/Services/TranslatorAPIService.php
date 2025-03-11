@@ -7,6 +7,9 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use Filament\Notifications\Notification;
+use ErrorException;
 
 final class TranslatorAPIService
 {
@@ -20,6 +23,25 @@ final class TranslatorAPIService
         $this->key = config('services.translator.key');
         $this->region = config('services.translator.region');
         $this->cachekey = "translation_{$sourceLang}_{$targetLang}_".hash('xxh3', $text);
+        try {
+            if (cache::has($this->cachekey)) {
+                $this->translatedText = cache::get($this->cachekey);
+                return;
+            }
+        } catch (ErrorException $e) { /** @phpstan-ignore-line */
+            Log::error($e);
+            Notification::make()
+                ->title('翻訳キャッシュが破損しています')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+            $this->translatedText = $text;
+            return;
+        }
+        if (empty($this->key) || (empty($this->region) && config('services.translator.service') === 'Microsoft')) {
+            $this->translatedText = $text;
+            return;
+        }
         match (config('services.translator.service')) {
             'Microsoft' => $this->translatedText = $this->MicrosoftTranslate($text, $sourceLang, $targetLang),
             'DeepL' => $this->translatedText = $this->DeepLTranslate($text, $targetLang),
@@ -29,12 +51,6 @@ final class TranslatorAPIService
 
     private function MicrosoftTranslate(string $text, string $sourceLang, ?string $targetLang): string
     {
-        if (empty($this->key) || empty($this->region) || empty($targetLang)) {
-            return $text;
-        }
-        if (Cache::has($this->cachekey)) {
-            return Cache::get($this->cachekey);
-        }
         $url = "https://api.cognitive.microsofttranslator.com/translate?api-version=3.0&from={$sourceLang}&to={$targetLang}";
         $response = Http::withHeaders([
             'Ocp-Apim-Subscription-Key' => $this->key,
@@ -55,12 +71,6 @@ final class TranslatorAPIService
 
     private function DeepLTranslate(string $text, string $targetLang): string
     {
-        if (empty($targetLang) || empty($this->key)) {
-            return $text;
-        }
-        if (Cache::has($this->cachekey)) {
-            return Cache::get($this->cachekey);
-        }
         $url = "https://api-free.deepl.com/v2/translate";
         $response = Http::withHeaders([
             'Authorization' => "DeepL-Auth-Key {$this->key}",

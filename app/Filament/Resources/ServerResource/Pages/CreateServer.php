@@ -37,7 +37,7 @@ class CreateServer extends CreateRecord
         /** @var Server $record */
         $record = parent::handleRecordCreation($data);
         try {
-            $res = (new ServerApiService())->createServer($record);
+            $res = (new ServerApiService())->CreateServer($record);
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -51,10 +51,8 @@ class CreateServer extends CreateRecord
         activity()
             ->performedOn($record)
             ->causedBy(auth()->user())
-            ->withProperties([
-                'level' => 'info',
-            ])
-        ->log('サーバーを作成しました');
+            ->withProperties(['level' => 'info'])
+            ->log('サーバーを作成しました');
         Notification::make()
             ->title('サーバー作成に成功しました')
             ->success()
@@ -79,7 +77,7 @@ class CreateServer extends CreateRecord
         try {
             $record = $this->handleRecordCreation($data);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
+            Log::error($e);
             Notification::make()
                 ->title($e->getMessage())
                 ->danger()

@@ -28,7 +28,7 @@ class EditServer extends EditRecord
     protected function handleRecordUpdate(Model $record, array $data): Model
     {
         /** @var Server $record */
-        (new ServerApiService())->updateServer($record);
+        (new ServerApiService())->UpdateServer($record);
         return $record;
     }
 
