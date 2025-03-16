@@ -12,7 +12,7 @@ use Filament\Forms\Components\Select;
 
 class Settings extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?string $navigationIcon = 'tabler-settings';
     protected static string $view = 'filament.pages.settings';
     protected static ?string $navigationLabel = '設定';
     protected static ?string $navigationGroup = 'パネル管理';

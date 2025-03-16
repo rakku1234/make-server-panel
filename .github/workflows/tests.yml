@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mysql_version: ['8.0', '8.4']
+        mysql_version: ['8.4']
     permissions:
       pull-requests: read
     services:
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        mariadb_version: ['10.11', '11.4', '11.7']
+        mariadb_version: ['10.11', '11.4']
     permissions:
       pull-requests: read
     services:

@@ -16,6 +16,7 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "pragmarx/google2fa": "^8.0",
+        "secondnetwork/blade-tabler-icons": "^3.31",
         "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-discord-alerts": "^1.6",
         "spatie/laravel-permission": "^6.15",

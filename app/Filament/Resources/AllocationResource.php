@@ -18,7 +18,7 @@ use App\Models\Node;
 class AllocationResource extends Resource
 {
     protected static ?string $model = Allocation::class;
-    protected static ?string $navigationIcon = 'heroicon-o-server';
+    protected static ?string $navigationIcon = 'tabler-server-cog';
     protected static ?string $navigationLabel = 'アロケーション';
     protected static ?string $navigationGroup = 'サーバー管理';
     protected static ?int $navigationSort = 4;

@@ -40,7 +40,7 @@ use TypeError;
 class ServerResource extends Resource
 {
     protected static ?string $model = Server::class;
-    protected static ?string $navigationIcon = 'heroicon-o-server-stack';
+    protected static ?string $navigationIcon = 'tabler-brand-docker';
     protected static ?string $navigationLabel = 'サーバー';
     protected static ?string $navigationGroup = 'サーバー管理';
     protected static ?int $navigationSort = 2;
@@ -82,7 +82,7 @@ class ServerResource extends Resource
                             ->suffixAction(
                                 Action::make('random')
                                     ->label('ランダム生成')
-                                    ->icon('heroicon-s-arrow-path')
+                                    ->icon('tabler-arrows-random')
                                     ->action(fn (callable $set) => $set('name', Str::random(10)))
                                     ->visible(fn ($livewire) => $livewire instanceof CreateRecord)
                             ),

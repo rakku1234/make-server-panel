@@ -20,7 +20,7 @@ use Exception;
 
 class ServersImportPage extends Page
 {
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
+    protected static ?string $navigationIcon = 'tabler-download';
     protected static string $view = 'filament.pages.servers-import-page';
     protected static ?string $title = 'サーバー情報の取り込み';
     protected static ?string $navigationLabel = 'サーバー情報の取り込み';
