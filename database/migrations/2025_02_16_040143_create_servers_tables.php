@@ -17,7 +17,7 @@ return new class extends Migration
             $table->uuid('uuid')->unique()->nullable();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->unsignedInteger('sort_order')->nullable();
+            $table->unsignedInteger('sort')->nullable();
             $table->text('description')->nullable();
 
             $table->string('status')->default('');

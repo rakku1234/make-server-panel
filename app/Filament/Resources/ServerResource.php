@@ -83,7 +83,7 @@ class ServerResource extends Resource
                                 Action::make('random')
                                     ->label('ランダム生成')
                                     ->icon('tabler-arrows-random')
-                                    ->action(fn (callable $set) => $set('name', Str::random(10)))
+                                    ->action(fn (callable $set) => $set('name', Str::random()))
                                     ->visible(fn ($livewire) => $livewire instanceof CreateRecord)
                             ),
                         TextInput::make('external_id')
@@ -423,8 +423,8 @@ class ServerResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->reorderable('sort_order')
-            ->defaultSort('sort_order')
+            ->reorderable('sort')
+            ->defaultSort('sort')
             ->poll('180s')
             ->deferLoading()
             ->striped()
@@ -459,7 +459,7 @@ class ServerResource extends Resource
                     }),
                 TextColumn::make('name')
                     ->label('サーバー名')
-                    ->formatStateUsing(fn ($state, $record) => $state ?: $record->name),
+                    ->formatStateUsing(fn ($state) => $state),
                 TextColumn::make('limits.cpu')
                     ->label('CPU')
                     ->formatStateUsing(fn ($state) => match ($state) {
@@ -480,10 +480,10 @@ class ServerResource extends Resource
                     }),
                 TextColumn::make('egg')
                     ->label('Egg名')
-                    ->formatStateUsing(fn ($state, $record) => Egg::where('egg_id', $record->egg)->first()->name ?? "Egg情報がありません (Egg: {$record->egg})"),
+                    ->formatStateUsing(fn ($record) => Egg::where('egg_id', $record->egg)->first()->name ?? "Egg情報がありません (Egg: {$record->egg})"),
                 TextColumn::make('node')
                     ->label('ノード')
-                    ->formatStateUsing(fn ($state, $record) => Node::where('node_id', $record->node)->first()->name ?? "ノード情報がありません (ノード: {$record->node})"),
+                    ->formatStateUsing(fn ($record) => Node::where('node_id', $record->node)->first()->name ?? "ノード情報がありません (ノード: {$record->node})"),
             ])
             ->filters([
                 SelectFilter::make('node')
