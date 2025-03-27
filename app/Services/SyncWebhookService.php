@@ -9,8 +9,9 @@ use App\Models\Node;
 use App\Models\User;
 use App\Models\Allocation;
 use App\Models\Egg;
-use App\Func\NumberConverter;
+use App\Components\NumberConverter;
 use Exception;
+//use Spatie\DiscordAlerts\DiscordAlert;
 
 final class SyncWebhookService
 {
@@ -100,26 +101,33 @@ final class SyncWebhookService
             $data['node'] = $data[0]['node_id'];
             $data['slug'] = Str::random(10);
             $data['limits'] = [
-                'cpu'      => NumberConverter::convertCpuCore($data[0]['cpu'], false),
-                'memory'   => NumberConverter::convert($data[0]['memory'], 'MB', 'MiB'),
-                'swap'     => $data[0]['swap'],
-                'disk'     => NumberConverter::convert($data[0]['disk'], 'MB', 'MiB'),
-                'io'       => $data[0]['io'],
-                'threads'  => $data[0]['threads'],
-                'oom_kill' => true,
+                'cpu'        => NumberConverter::convertCpuCore($data[0]['cpu'], false),
+                'memory'     => NumberConverter::convert($data[0]['memory'], 'MB', 'MiB'),
+                'swap'       => $data[0]['swap'],
+                'disk'       => NumberConverter::convert($data[0]['disk'], 'MB', 'MiB'),
+                'io'         => $data[0]['io'],
+                'threads'    => $data[0]['threads'],
+                'oom_killer' => true,
             ];
             $data['feature_limits'] = [
                 'databases'   => $data[0]['database_limit'],
                 'allocations' => $data[0]['allocation_limit'],
                 'backups'     => $data[0]['backup_limit'],
             ];
-            $data['egg']                = Egg::where('egg_id', $data[0]['egg_id'])->firstOrFail();
+            if (Egg::where('egg_id', $data[0]['egg_id'])->exists()) {
+                $data['egg'] = $data[0]['egg_id'];
+            } else {
+                throw new Exception('Egg not found');
+            }
             $data['docker_image']       = $data[0]['image'];
             $data['egg_variables']      = [];
             $data['egg_variables_meta'] = [];
-            Server::create($data);
+            if (!Server::where('uuid', $data[0]['uuid'])->exists()) {
+                Server::create($data);
+            }
         } catch (Exception $e) {
             Log::error($e);
+            //DiscordAlert::to(config('discord-alerts.webhook_urls.error'))->message('Error creating server: ' . $e->getMessage())->send();
         }
     }
 

@@ -16,10 +16,10 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Placeholder;
 use Symfony\Component\Intl\Languages;
-use DateTimeZone;
 use PragmaRX\Google2FA\Google2FA;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
+use DateTimeZone;
 
 class Profile extends BaseProfile implements HasForms
 {
@@ -55,11 +55,7 @@ class Profile extends BaseProfile implements HasForms
         $this->unit = $user->unit;
         $this->lang = $user->lang;
         $this->google2fa_enabled = $user->google2fa_enabled;
-        if (!$user->google2fa_secret) {
-            $this->google2fa_secret = (new Google2FA())->generateSecretKey();
-        } else {
-            $this->google2fa_secret = $user->google2fa_secret;
-        }
+        $this->google2fa_secret = !$user->google2fa_secret ? (new Google2FA())->generateSecretKey() : $user->google2fa_secret;
     }
 
     protected function getFormSchema(): array

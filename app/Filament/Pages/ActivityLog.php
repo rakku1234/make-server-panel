@@ -31,7 +31,7 @@ class ActivityLog extends Page implements HasTable
             ->query($query)
             ->columns([
                 ImageColumn::make('causer.avatar')
-                    ->label('アバター')
+                    ->label('')
                     ->circular()
                     ->state(fn ($record) => (new AvatarsProvider())->get($record->causer))
                     ->width(40),

@@ -7,22 +7,26 @@ namespace App\Filament\Resources;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Facades\Blade;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\ToggleButtons;
+use Filament\Forms\Components\Wizard;
+use Filament\Forms\Components\Wizard\Step;
 use Filament\Resources\Resource;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Tables\Actions;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group as TableGroup;
 use Filament\Notifications\Notification;
 use App\Filament\Resources\ServerResource\Pages;
 use App\Models\Allocation;
@@ -33,7 +37,7 @@ use App\Models\User;
 use App\Jobs\DeleteServerJob;
 use App\Services\TranslatorAPIService;
 use App\Filament\Resources\ServerResource\Pages\EditServer;
-use App\Func\NumberConverter;
+use App\Components\NumberConverter;
 use CodeWithDennis\SimpleAlert\Components\Forms\SimpleAlert;
 use TypeError;
 
@@ -71,352 +75,353 @@ class ServerResource extends Resource
                     ->columnSpanFull()
                     ->visible(auth()->user()->resource_limits === null),
 
-                Section::make('サーバー基本情報')
-                    ->description('サーバーの基本情報を設定します。')
-                    ->collapsible()
-                    ->schema([
-                        TextInput::make('name')
-                            ->label('サーバー名')
-                            ->required()
-                            ->autocomplete(false)
-                            ->suffixAction(
-                                Action::make('random')
-                                    ->label('ランダム生成')
-                                    ->icon('tabler-arrows-random')
-                                    ->action(fn (callable $set) => $set('name', Str::random()))
-                                    ->visible(fn ($livewire) => $livewire instanceof CreateRecord)
-                            ),
-                        TextInput::make('external_id')
-                            ->label('外部ID')
-                            ->hint('何を意味しているかわからない場合は、空のままにしてください'),
-                        TextInput::make('description')
-                            ->label('説明')
-                            ->autocomplete(false)
-                            ->columnSpanFull(),
-                        Select::make('node')
-                            ->label('ノード')
-                            ->hint('サーバーが実行されるノードです')
-                            ->options(function () {
-                                $query = Node::query();
-                                if (!auth()->user()->hasRole('admin')) {
-                                    $query->where('public', 1);
-                                }
-                                return $query->pluck('name', 'node_id');
-                            })
-                            ->required()
-                            ->reactive(),
-                        Select::make('allocation_id')
-                            ->label('割り当て')
-                            ->hint('サーバーのIPアドレスとポートです')
-                            ->reactive()
-                            ->options(function (callable $get, $livewire) {
-                                $node = $get('node');
-                                $query = Allocation::where('node_id', $node);
-                                if ($livewire instanceof EditServer) {
-                                    $allocationId = $get('allocation_id');
-                                    $query->where('id', $allocationId)->orWhere('assigned', false);
+                Wizard::make([
+                    Step::make('server-basic-settings')
+                        ->label('サーバー基本設定')
+                        ->schema([
+                            TextInput::make('name')
+                                ->label('サーバー名')
+                                ->required()
+                                ->autocomplete(false)
+                                ->suffixAction(
+                                    Action::make('random')
+                                        ->label('ランダム生成')
+                                        ->icon('tabler-arrows-random')
+                                        ->action(fn (callable $set) => $set('name', Str::random()))
+                                        ->visible(fn ($livewire) => $livewire instanceof CreateRecord)
+                                ),
+                            TextInput::make('external_id')
+                               ->label('外部ID')
+                                ->hint('何を意味しているかわからない場合は、空のままにしてください'),
+                            TextInput::make('description')
+                                ->label('説明')
+                                ->autocomplete(false)
+                                ->columnSpanFull(),
+                            Select::make('node')
+                                ->label('ノード')
+                                ->hint('サーバーが実行されるノードです')
+                                ->options(function () {
+                                    $query = Node::query();
                                     if (!auth()->user()->hasRole('admin')) {
-                                        $query->where('public', true);
-                                    }
-                                } else {
-                                    $query->where('assigned', false);
-                                    if (!auth()->user()->hasRole('admin')) {
-                                        $query->where('public', true);
-                                    }
-                                }
-                                return $query->get()
-                                    ->mapWithKeys(function ($allocation) {
-                                        return [
-                                            $allocation->id => "{$allocation->alias}:{$allocation->port}",
-                                        ];
-                                    })
-                                    ->toArray();
-                            })
-                            ->required(),
-                    ]),
-
-                Section::make('Egg & Docker 設定')
-                    ->description('サーバーのEggとDocker Imageを設定します。')
-                    ->schema([
-                        Select::make('egg')
-                            ->label('Egg')
-                            ->hint('サーバーのテンプレートです')
-                            ->options(function () {
-                                $query = Egg::select(['egg_id', 'name']);
-                                if (!auth()->user()->hasRole('admin')) {
-                                    $query->where('public', true);
-                                }
-                                return $query->pluck('name', 'egg_id');
-                            })
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                $query = Egg::query();
-                                $query->where('egg_id', $state);
-                                if (!auth()->user()->hasRole('admin')) {
-                                    $query->where('public', true);
-                                }
-                                $egg = $query->first();
-                                if ($egg) {
-                                    $dockerImages = is_array($egg->docker_images) ? $egg->docker_images : [];
-                                    $images = array_values($dockerImages);
-                                    $set('docker_image', count($images) > 0 ? $images[0] : null);
-                                    try {
-                                        $variables = json_decode($egg->egg_variables, true);
-                                    } catch (TypeError $e) { /** @phpstan-ignore-line */
-                                        Log::error($e);
-                                        Notification::make()
-                                            ->title('エラーが発生しました')
-                                            ->body($e->getMessage())
-                                            ->danger()
-                                            ->send();
-                                        return redirect()->to('/admin/servers');
-                                    }
-                                    $values = [];
-                                    $metadata = [];
-                                    foreach ($variables as $variable) {
-                                        if (isset($variable['env_variable'])) {
-                                            $envVar = $variable['env_variable'];
-                                            $values[$envVar] = $variable['default_value'];
-                                            $metadata[$envVar] = [
-                                                'description' => $variable['description'],
-                                                'user_editable' => $variable['user_editable'],
-                                                'user_viewable' => $variable['user_viewable'],
-                                                'rules' => $variable['rules'],
-                                            ];
+                                        $query->where('public', 1);
+                                  }
+                                    return $query->pluck('name', 'node_id');
+                                })
+                                ->required()
+                                ->reactive(),
+                            Select::make('allocation_id')
+                                ->label('割り当て')
+                                ->hint('サーバーのIPアドレスとポートです')
+                                ->reactive()
+                                ->options(function (callable $get, $livewire) {
+                                    $node = $get('node');
+                                    $query = Allocation::where('node_id', $node);
+                                    if ($livewire instanceof EditServer) {
+                                        $allocationId = $get('allocation_id');
+                                        $query->where('id', $allocationId)->orWhere('assigned', false);
+                                        if (!auth()->user()->hasRole('admin')) {
+                                            $query->where('public', true);
+                                        }
+                                    } else {
+                                        $query->where('assigned', false);
+                                        if (!auth()->user()->hasRole('admin')) {
+                                            $query->where('public', true);
                                         }
                                     }
-                                    $set('egg_variables', $values);
-                                    $set('egg_variables_meta', $metadata);
-                                } else {
-                                    $set('egg_variables', []);
-                                    $set('egg_variables_meta', []);
-                                    $set('docker_image', null);
-                                }
-                            })
-                            ->reactive()
-                            ->required(),
-                        Select::make('docker_image')
-                            ->label('Docker Image')
-                            ->hint('Docker Image')
-                            ->visible(fn (callable $get) => !empty($get('egg')))
-                            ->options(function (callable $get) {
-                                $eggId = $get('egg');
-                                $egg = Egg::find($eggId);
-                                $dockerImages = $egg->docker_images;
-                                if (is_array($dockerImages)) {
-                                    return array_combine($dockerImages, $dockerImages);
-                                }
-                                return [];
-                            })
-                            ->required(),
-                        Placeholder::make('')
-                            ->content('Eggの環境変数を設定してください。')
-                            ->columnSpanFull()
-                            ->visible(fn (callable $get) => !empty($get('egg_variables'))),
-                        Group::make()
-                            ->schema(function (callable $get, $livewire) {
-                                $eggId = $get('egg') ?? ($livewire instanceof EditServer ? data_get($livewire->record, 'egg') : null);
-                                $eggValues = $livewire instanceof EditServer ? data_get($livewire->record, 'egg_variables', []) : ($get('egg_variables') ?? []);
-                                $eggRecord = Egg::where('egg_id', $eggId)->first();
-                                $eggMetas = $eggRecord ? ($eggRecord->egg_variables ?? []) : [];
-                                $fields = [];
-                                $decode = is_array($eggMetas) ? $eggMetas : json_decode($eggMetas, true);
-                                $count = 0;
-                                foreach ($eggValues as $key => $value) {
-                                    if (!isset($decode[$count])) {
-                                        continue;
-                                    }
-                                    $meta = $decode[$count];
-                                    $input = TextInput::make("egg_variables.{$key}")
-                                        ->label($key)
-                                        ->hint((new TranslatorAPIService($meta['description'], 'en', request()->getPreferredLanguage()))->translatedText)
-                                        ->default($value)
-                                        ->reactive();
-                                    if (isset($meta['user_viewable']) && !$meta['user_viewable']) {
-                                        $input->hidden();
-                                    }
-                                    if (isset($meta['user_editable']) && !$meta['user_editable']) {
-                                        $input->disabled();
-                                    }
-                                    if (isset($meta['rules'])) {
-                                        $input->rules($meta['rules']);
-                                    }
-                                    $fields[] = $input;
-                                    $count++;
-                                }
-                                return $fields;
-                            })
-                            ->visible(fn (callable $get) => !empty($get('egg'))),
-                    ])
-                    ->columns(1)
-                    ->visible(fn ($livewire) => $livewire instanceof CreateRecord),
+                                    return $query->get()
+                                        ->mapWithKeys(fn ($allocation) => [$allocation->id => "{$allocation->alias}:{$allocation->port}"],)
+                                        ->toArray();
+                                })
+                                ->required(),
+                        ]),
 
-                Section::make('リソース設定')
-                    ->description('サーバーのリソースを設定します。')
-                    ->collapsible()
-                    ->schema([
-                        TextInput::make('limits.cpu')
-                            ->label('CPU')
-                            ->hint('コア単位')
-                            ->reactive()
-                            ->minValue(1)
-                            ->maxValue(function (callable $get) {
-                                $user = User::where('panel_user_id', auth()->user()->panel_user_id)->first();
-                                $maxCpu = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_cpu'];
-                                if ($maxCpu === -1) {
-                                    return null;
-                                }
-                                $servers = Server::where('node', $get('node'))->get();
-                                $totalCpu = 0;
-                                foreach ($servers as $server) {
-                                    $limits = $server->limits;
-                                    $cpu = $limits['cpu'];
-                                    $totalCpu += $cpu;
-                                }
-                                $totalCpu = NumberConverter::convertCpuCore($totalCpu);
-                                $maxCpu = NumberConverter::convertCpuCore($maxCpu);
-                                return max($maxCpu - $totalCpu, 0);
-                            })
-                            ->suffix('コア')
-                            ->default(0)
-                            ->numeric()
-                            ->dehydrateStateUsing(fn($state) => NumberConverter::convertCpuCore((float)$state, false))
-                            ->formatStateUsing(fn($state) => NumberConverter::convertCpuCore($state))
-                            ->required(),
-                        TextInput::make('limits.memory')
-                            ->label('メモリ')
-                            ->hint('MB単位 (1GB = 1000MB)')
-                            ->reactive()
-                            ->minValue(1)
-                            ->maxValue(function (callable $get) {
-                                $user = User::where('panel_user_id', auth()->user()->panel_user_id)->first();
-                                $maxMemory = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_memory'] ?? null;
-                                if ($maxMemory === -1) {
-                                    return null;
-                                }
-                                $servers = Server::where('node', $get('node'))->get();
-                                $totalMemory = 0;
-                                foreach ($servers as $server) {
-                                    $limits = $server->limits;
-                                    $memory = $limits['memory'];
-                                    $totalMemory += $memory;
-                                }
-                                $maxMemory = NumberConverter::convert($maxMemory, 'MiB', 'MB');
-                                $totalMemory = NumberConverter::convert($totalMemory, 'MiB', 'MB');
-                                return max($maxMemory - $totalMemory, 0);
-                            })
-                            ->suffix('MB')
-                            ->default(0)
-                            ->numeric()
-                            ->dehydrateStateUsing(fn($state) => NumberConverter::convert((float)$state, 'MB', 'MiB'))
-                            ->formatStateUsing(fn($state) => NumberConverter::convert($state, 'MiB', 'MB'))
-                            ->required(),
-                        TextInput::make('limits.swap')
-                            ->label('スワップ')
-                            ->suffix('MB')
-                            ->hint('MB単位 (1GB = 1000MB)')
-                            ->default(-1)
-                            ->numeric()
-                            ->readOnly()
-                            ->required(),
-                        TextInput::make('limits.disk')
-                            ->label('ディスク')
-                            ->hint('MB単位 (1GB = 1000MB)')
-                            ->suffix('MB')
-                            ->reactive()
-                            ->minValue(1)
-                            ->maxValue(function (callable $get) {
-                                $user = User::where('panel_user_id', auth()->user()->panel_user_id)->first();
-                                $maxDisk = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_disk'] ?? null;
-                                $servers = Server::where('node', $get('node'))->get();
-                                $totalDisk = 0;
-                                foreach ($servers as $server) {
-                                    $limits = $server->limits;
-                                    $disk = $limits['disk'];
-                                    $totalDisk += $disk;
-                                }
-                                $maxDisk = NumberConverter::convert($maxDisk, 'MiB', 'MB');
-                                $totalDisk = NumberConverter::convert($totalDisk, 'MiB', 'MB');
-                                if ((int)$maxDisk === -1) {
-                                    return null;
-                                }
-                                if ($totalDisk > $maxDisk) {
-                                    return 0;
-                                }
-                                return max($maxDisk - $totalDisk, 0);
-                            })
-                            ->default(0)
-                            ->numeric()
-                            ->dehydrateStateUsing(fn($state) => NumberConverter::convert((float)$state, 'MB', 'MiB', false, 0))
-                            ->formatStateUsing(fn($state) => NumberConverter::convert($state, 'MiB', 'MB', false, 0))
-                            ->required(),
-                        TagsInput::make('limits.threads')
-                            ->label('CPUピニング')
-                            ->hint('コアを選択してください (わからない場合は空のままにしてください)')
-                            ->placeholder('コアを指定')
-                            ->disabled(),
-                        TextInput::make('limits.io')
-                            ->label('Block I/O')
-                            ->hint('Docker Block I/O (わからない場合は変えないでください)')
-                            ->minValue(10)
-                            ->maxValue(1000)
-                            ->default(500)
-                            ->numeric()
-                            ->required(),
-                        ToggleButtons::make('limits.oom_killer')
-                            ->label('OOM Killer')
-                            ->options([
-                                'true' => '有効',
-                                'false' => '無効',
-                            ])
-                            ->default('true')
-                            ->disabled()
-                            ->inline(),
-                    ])
-                    ->columns(2),
+                    Step::make('egg-and-docker-settings')
+                        ->label('Egg & Dockerの設定')
+                        ->schema([
+                            Select::make('egg')
+                                ->label('Egg')
+                                ->hint('サーバーのテンプレートです')
+                                ->options(function () {
+                                    $query = Egg::select(['egg_id', 'name']);
+                                    if (!auth()->user()->hasRole('admin')) {
+                                        $query->where('public', true);
+                                    }
+                                    return $query->pluck('name', 'egg_id');
+                                })
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    $query = Egg::query();
+                                    $query->where('egg_id', $state);
+                                    if (!auth()->user()->hasRole('admin')) {
+                                        $query->where('public', true);
+                                    }
+                                    $egg = $query->first();
+                                    if ($egg) {
+                                        $dockerImages = is_array($egg->docker_images) ? $egg->docker_images : [];
+                                        $images = array_values($dockerImages);
+                                        $set('docker_image', count($images) > 0 ? $images[0] : null);
+                                        try {
+                                            $variables = json_decode($egg->egg_variables, true);
+                                        } catch (TypeError $e) { /** @phpstan-ignore-line */
+                                            Log::error($e);
+                                            Notification::make()
+                                                ->title('エラーが発生しました')
+                                                ->body($e->getMessage())
+                                                ->danger()
+                                                ->send();
+                                            return redirect()->to('/admin/servers');
+                                        }
+                                        $values = [];
+                                        $metadata = [];
+                                        foreach ($variables as $variable) {
+                                            if (isset($variable['env_variable'])) {
+                                                $envVar = $variable['env_variable'];
+                                                $values[$envVar] = $variable['default_value'];
+                                                $metadata[$envVar] = [
+                                                    'description' => $variable['description'],
+                                                    'user_editable' => $variable['user_editable'],
+                                                    'user_viewable' => $variable['user_viewable'],
+                                                    'rules' => $variable['rules'],
+                                                ];
+                                            }
+                                        }
+                                        $set('egg_variables', $values);
+                                        $set('egg_variables_meta', $metadata);
+                                    } else {
+                                        $set('egg_variables', []);
+                                        $set('egg_variables_meta', []);
+                                        $set('docker_image', null);
+                                    }
+                                })
+                                ->reactive()
+                                ->required(),
+                            Select::make('docker_image')
+                                ->label('Docker Image')
+                                ->hint('Docker Image')
+                                ->visible(fn (callable $get) => !empty($get('egg')))
+                                ->options(function (callable $get) {
+                                    $eggId = $get('egg');
+                                    $egg = Egg::find($eggId);
+                                    $dockerImages = $egg->docker_images;
+                                    if (is_array($dockerImages)) {
+                                        return array_combine($dockerImages, $dockerImages);
+                                    }
+                                    return [];
+                                })
+                                ->required(),
+                            Placeholder::make('')
+                                ->content('Eggの環境変数を設定してください。')
+                                ->columnSpanFull()
+                                ->visible(fn (callable $get) => !empty($get('egg_variables'))),
+                            Group::make()
+                                ->schema(function (callable $get, $livewire) {
+                                    $eggId = $get('egg') ?? ($livewire instanceof EditServer ? data_get($livewire->record, 'egg') : null);
+                                    $eggValues = $livewire instanceof EditServer ? data_get($livewire->record, 'egg_variables', []) : ($get('egg_variables') ?? []);
+                                    $eggRecord = Egg::where('egg_id', $eggId)->first();
+                                    $eggMetas = $eggRecord ? ($eggRecord->egg_variables ?? []) : [];
+                                    $fields = [];
+                                    $decode = is_array($eggMetas) ? $eggMetas : json_decode($eggMetas, true);
+                                    $count = 0;
+                                    foreach ($eggValues as $key => $value) {
+                                        if (!isset($decode[$count])) {
+                                            continue;
+                                        }
+                                        $meta = $decode[$count];
+                                        $input = TextInput::make("egg_variables.{$key}")
+                                            ->label($key)
+                                            ->hint((new TranslatorAPIService($meta['description'], 'en', request()->getPreferredLanguage()))->translatedText)
+                                            ->default($value)
+                                            ->reactive();
+                                        if (isset($meta['user_viewable']) && !$meta['user_viewable']) {
+                                            $input->hidden();
+                                        }
+                                        if (isset($meta['user_editable']) && !$meta['user_editable']) {
+                                            $input->disabled();
+                                        }
+                                        if (isset($meta['rules'])) {
+                                            $input->rules($meta['rules']);
+                                        }
+                                        $fields[] = $input;
+                                        $count++;
+                                    }
+                                    return $fields;
+                                })
+                                ->visible(fn (callable $get) => !empty($get('egg'))),
+                        ])
+                        ->columns(1)
+                        ->visible(fn ($livewire) => $livewire instanceof CreateRecord),
 
-                Section::make('その他設定')
-                    ->collapsible()
-                    ->schema([
-                        ToggleButtons::make('start_on_completion')
-                            ->label('自動起動')
-                            ->hint('インストール完了後にサーバーを自動で起動します')
-                            ->options([
-                                'true' => '有効',
-                                'false' => '無効',
-                            ])
-                            ->default('true')
-                            ->visible(fn ($livewire) => $livewire instanceof CreateRecord)
-                            ->required()
-                            ->inline(),
-                        TextInput::make('feature_limits.databases')
-                            ->label('データベース')
-                            ->hint('データベースの数')
-                            ->default(0)
-                            ->readOnly()
-                            ->required(),
-                        TextInput::make('feature_limits.allocations')
-                            ->label('追加割り当て')
-                            ->hint('追加割り当ての数')
-                            ->default(0)
-                            ->readOnly()
-                            ->required(),
-                        TextInput::make('feature_limits.backups')
-                            ->label('バックアップ')
-                            ->hint('バックアップの数')
-                            ->default(3)
-                            ->readOnly()
-                            ->required(),
-                    ])
-                    ->columns(2),
-                Hidden::make('user')
-                    ->default(auth()->id())
-                    ->required(),
-                Hidden::make('slug')
-                    ->default(fn (callable $get) => Str::slug($get('external_id') ?? Str::random()))
-                    ->required(),
-                Hidden::make('status')
-                    ->default('installing')
-                    ->required(),
+                    Step::make('resource-settings')
+                        ->label('リソースの設定')
+                        ->schema([
+                            TextInput::make('limits.cpu')
+                                ->label('CPU')
+                                ->hint('コア単位')
+                                ->reactive()
+                                ->minValue(1)
+                                ->maxValue(function (callable $get) {
+                                    $user = User::where('panel_user_id', auth()->user()->panel_user_id)->first();
+                                    $maxCpu = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_cpu'];
+                                    if ($maxCpu === -1) {
+                                        return null;
+                                    }
+                                    $servers = Server::where('node', $get('node'))->get();
+                                    $totalCpu = 0;
+                                    foreach ($servers as $server) {
+                                        $limits = $server->limits;
+                                        $cpu = $limits['cpu'];
+                                        $totalCpu += $cpu;
+                                    }
+                                    $totalCpu = NumberConverter::convertCpuCore($totalCpu);
+                                    $maxCpu = NumberConverter::convertCpuCore($maxCpu);
+                                    return max($maxCpu - $totalCpu, 0);
+                                })
+                                ->suffix('コア')
+                                ->default(0)
+                                ->numeric()
+                                ->dehydrateStateUsing(fn($state) => NumberConverter::convertCpuCore((float)$state, false))
+                                ->formatStateUsing(fn($state) => NumberConverter::convertCpuCore($state))
+                                ->required(),
+                            TextInput::make('limits.memory')
+                                ->label('メモリ')
+                                ->hint('MB単位 (1GB = 1000MB)')
+                                ->reactive()
+                                ->minValue(1)
+                                ->maxValue(function (callable $get) {
+                                    $user = User::where('panel_user_id', auth()->user()->panel_user_id)->first();
+                                    $maxMemory = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_memory'] ?? null;
+                                    if ($maxMemory === -1) {
+                                        return null;
+                                    }
+                                    $servers = Server::where('node', $get('node'))->get();
+                                    $totalMemory = 0;
+                                    foreach ($servers as $server) {
+                                        $limits = $server->limits;
+                                        $memory = $limits['memory'];
+                                        $totalMemory += $memory;
+                                    }
+                                    $maxMemory = NumberConverter::convert($maxMemory, 'MiB', 'MB');
+                                    $totalMemory = NumberConverter::convert($totalMemory, 'MiB', 'MB');
+                                    return max($maxMemory - $totalMemory, 0);
+                                })
+                                ->suffix('MB')
+                                ->default(0)
+                                ->numeric()
+                                ->dehydrateStateUsing(fn($state) => NumberConverter::convert((float)$state, 'MB', 'MiB'))
+                                ->formatStateUsing(fn($state) => NumberConverter::convert($state, 'MiB', 'MB'))
+                                ->required(),
+                            TextInput::make('limits.swap')
+                                ->label('スワップ')
+                                ->suffix('MB')
+                                ->hint('MB単位 (1GB = 1000MB)')
+                                ->default(-1)
+                                ->numeric()
+                                ->readOnly()
+                                ->required(),
+                            TextInput::make('limits.disk')
+                                ->label('ディスク')
+                                ->hint('MB単位 (1GB = 1000MB)')
+                                ->suffix('MB')
+                                ->reactive()
+                                ->minValue(1)
+                                ->maxValue(function (callable $get) {
+                                    $user = User::where('panel_user_id', auth()->user()->panel_user_id)->first();
+                                    $maxDisk = collect($user->resource_limits)->firstWhere('node_key', $get('node'))['max_disk'] ?? null;
+                                    $servers = Server::where('node', $get('node'))->get();
+                                    $totalDisk = 0;
+                                    foreach ($servers as $server) {
+                                        $limits = $server->limits;
+                                        $disk = $limits['disk'];
+                                        $totalDisk += $disk;
+                                    }
+                                    $maxDisk = NumberConverter::convert($maxDisk, 'MiB', 'MB');
+                                    $totalDisk = NumberConverter::convert($totalDisk, 'MiB', 'MB');
+                                    if ((int)$maxDisk === -1) {
+                                        return null;
+                                    }
+                                    if ($totalDisk > $maxDisk) {
+                                        return 0;
+                                    }
+                                    return max($maxDisk - $totalDisk, 0);
+                                })
+                                ->default(0)
+                                ->numeric()
+                                ->dehydrateStateUsing(fn($state) => NumberConverter::convert((float)$state, 'MB', 'MiB', false, 0))
+                                ->formatStateUsing(fn($state) => NumberConverter::convert($state, 'MiB', 'MB', false, 0))
+                                ->required(),
+                            TagsInput::make('limits.threads')
+                                ->label('CPUピニング')
+                                ->hint('コアを選択してください (わからない場合は空のままにしてください)')
+                                ->placeholder('コアを指定')
+                                ->disabled(),
+                            TextInput::make('limits.io')
+                                ->label('Block I/O')
+                                ->hint('Docker Block I/O (わからない場合は変えないでください)')
+                                ->minValue(10)
+                                ->maxValue(1000)
+                                ->default(500)
+                                ->numeric()
+                                ->required(),
+                            ToggleButtons::make('limits.oom_killer')
+                                ->label('OOM Killer')
+                                ->options([
+                                    'true' => '有効',
+                                    'false' => '無効',
+                                ])
+                                ->default('true')
+                                ->disabled()
+                                ->inline(),
+                        ])
+                        ->columns(2),
+
+                    Step::make('other-settings')
+                        ->label('その他の設定')
+                        ->schema([
+                            ToggleButtons::make('start_on_completion')
+                                ->label('自動起動')
+                                ->hint('インストール完了後にサーバーを自動で起動します')
+                                ->options([
+                                    'true' => '有効',
+                                    'false' => '無効',
+                                ])
+                                ->default('true')
+                                ->visible(fn ($livewire) => $livewire instanceof CreateRecord)
+                                ->required()
+                                ->inline(),
+                            TextInput::make('feature_limits.databases')
+                                ->label('データベース')
+                                ->hint('データベースの数')
+                                ->default(0)
+                                ->readOnly()
+                                ->required(),
+                            TextInput::make('feature_limits.allocations')
+                                ->label('追加割り当て')
+                                ->hint('追加割り当ての数')
+                                ->default(0)
+                                ->readOnly()
+                                ->required(),
+                            TextInput::make('feature_limits.backups')
+                                ->label('バックアップ')
+                                ->hint('バックアップの数')
+                                ->default(3)
+                                ->readOnly()
+                                ->required(),
+                            Hidden::make('user')
+                                ->default(auth()->id())
+                                ->required(),
+                            Hidden::make('slug')
+                                ->default(fn (callable $get) => Str::slug($get('external_id') ?? Str::random()))
+                                ->required(),
+                            Hidden::make('status')
+                                ->default('installing')
+                                ->required(),
+                        ])
+                        ->columns(2)
+                ])
+                ->submitAction(new HtmlString(Blade::render(<<<BLADE
+                    <x-filament::button type="submit" size="sm" >Create</x-filament::button>
+                BLADE)))
+                ->persistStepInQueryString()
+                ->columnSpanFull()
             ]);
     }
 
@@ -428,6 +433,12 @@ class ServerResource extends Resource
             ->poll('180s')
             ->deferLoading()
             ->striped()
+            ->groups([
+                TableGroup::make('node')
+                    ->label('ノード')
+                    ->getTitleFromRecordUsing(fn ($record) => Node::where('node_id', $record->node)->first()->name)
+            ])
+            ->defaultGroup('node')
             ->columns([
                 TextColumn::make('status')
                     ->label('ステータス')
@@ -480,16 +491,12 @@ class ServerResource extends Resource
                     }),
                 TextColumn::make('egg')
                     ->label('Egg名')
-                    ->formatStateUsing(fn ($record) => Egg::where('egg_id', $record->egg)->first()->name ?? "Egg情報がありません (Egg: {$record->egg})"),
-                TextColumn::make('node')
-                    ->label('ノード')
-                    ->formatStateUsing(fn ($record) => Node::where('node_id', $record->node)->first()->name ?? "ノード情報がありません (ノード: {$record->node})"),
+                    ->formatStateUsing(fn ($record) => Egg::where('egg_id', $record->egg)->first()->name),
             ])
             ->filters([
                 SelectFilter::make('node')
                     ->label('ノード')
-                    ->options(Node::pluck('name', 'node_id'))
-                    ->default(Node::where('public', true)->first()?->node_id),
+                    ->options(Node::pluck('name', 'node_id')),
                 SelectFilter::make('status')
                     ->label('ステータス')
                     ->options([

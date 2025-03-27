@@ -6,6 +6,7 @@ return [
      */
     'webhook_urls' => [
         'default' => env('DISCORD_WEBHOOK_URL'),
+        'error' => env('DISCORD_WEBHOOK_URL_ERROR'),
     ],
 
     /*

@@ -11,6 +11,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use App\Filament\Resources\AllocationResource\Pages;
 use App\Models\Allocation;
 use App\Models\Node;
@@ -49,6 +50,12 @@ class AllocationResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->groups([
+                Group::make('node_id')
+                    ->label('ノード')
+                    ->getTitleFromRecordUsing(fn ($record) => Node::where('node_id', $record->node_id)->first()->name)
+            ])
+            ->defaultGroup('node_id')
             ->columns([
                 TextColumn::make('alias')
                     ->label('エイリアス'),
@@ -57,9 +64,6 @@ class AllocationResource extends Resource
                 TextColumn::make('assigned')
                     ->label('割り当て')
                     ->formatStateUsing(fn ($state) => $state ? '割り当て済み' : '未割り当て'),
-                TextColumn::make('node_id')
-                    ->label('ノード')
-                    ->formatStateUsing(fn ($state) => Node::where('node_id', $state)->first()->name),
                 ToggleColumn::make('public')
                     ->label('公開'),
             ])

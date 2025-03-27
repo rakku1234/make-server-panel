@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Func;
+namespace App\Components;
 
 use InvalidArgumentException;
 
-class NumberConverter
+final class NumberConverter
 {
     /**
      * @param float|int $value 変換する値
@@ -94,9 +94,7 @@ class NumberConverter
         bool $isCore = true,
         int $precision = 2
     ): float|int {
-        $result = $isCore
-            ? bcdiv((string)$value, '100', 10)
-            : bcmul((string)$value, '100', 10);
+        $result = $isCore ? bcdiv((string)$value, '100', 10) : bcmul((string)$value, '100', 10);
         return phpversion() >= 8.4 ? bcround($result, $precision) : round((float)$result, $precision);
     }
 }

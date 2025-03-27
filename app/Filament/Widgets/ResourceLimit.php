@@ -6,7 +6,7 @@ use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use App\Models\Node;
 use App\Models\Server;
-use App\Func\NumberConverter;
+use App\Components\NumberConverter;
 
 class ResourceLimit extends BaseWidget
 {
@@ -33,9 +33,7 @@ class ResourceLimit extends BaseWidget
                 continue;
             }
             $nodeName = $node->name ?? 'ノード '.$limit['node_key'];
-            $servers = Server::where('user', $user->id)
-                ->where('node', $limit['node_key'])
-                ->get();
+            $servers = Server::where('user', $user->id)->where('node', $limit['node_key'])->get();
             $used_cpu = 0;
             $used_memory = 0;
             $used_disk = 0;
@@ -51,11 +49,11 @@ class ResourceLimit extends BaseWidget
                 ->color('');
             $stats[] = Stat::make("{$nodeName} - メモリ", "利用中: ".NumberConverter::convert($used_memory, 'MiB', $unit, true, 0))
                 ->description("制限: ".($limit['max_memory'] === -1 ? "無制限" : NumberConverter::convert($limit['max_memory'], 'MiB', $unit, true, 2)))
-                ->icon('heroicon-o-server')
+                ->icon('tabler-desk')
                 ->color('');
             $stats[] = Stat::make("{$nodeName} - ディスク", "利用中: " . NumberConverter::convert($used_disk, 'MiB', $unit, true, 0))
                 ->description("制限: ".($limit['max_disk'] === -1 ? "無制限" : NumberConverter::convert($limit['max_disk'], 'MiB', $unit, true, 2)))
-                ->icon('heroicon-o-circle-stack')
+                ->icon('tabler-device-sd-card')
                 ->color('');
         }
         return $stats;

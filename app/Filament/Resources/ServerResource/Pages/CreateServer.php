@@ -92,4 +92,9 @@ class CreateServer extends CreateRecord
             $this->redirect(ServerResource::getUrl('index'));
         }
     }
+
+    public function getFormActions(): array
+    {
+        return [];
+    }
 }

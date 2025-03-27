@@ -67,6 +67,7 @@ class ServersImportPage extends Page
         $nodesResponse = Http::withToken($apiToken)->get($nodesApiUrl);
 
         $nodesData = [];
+        $nodeCount = 0;
 
         if ($nodesResponse->successful()) {
             $nodesData = $nodesResponse->json()['data'];
@@ -87,10 +88,13 @@ class ServersImportPage extends Page
                     'created_at'       => $attributes['created_at'],
                     'updated_at'       => $attributes['updated_at'],
                 ]);
+                $nodeCount++;
             }
         }
 
         $allocationsData = [];
+        $allocationCount = 0;
+
         foreach ($nodesData as $nodeItem) {
             $nodeAttributes = $nodeItem['attributes'] ?? [];
             if (!isset($nodeAttributes['id'])) {
@@ -118,6 +122,7 @@ class ServersImportPage extends Page
                         'assigned' => $attributes['assigned'],
                         'node_id'  => $nodeId,
                     ]);
+                    $allocationCount++;
                 }
             }
         }
@@ -126,6 +131,7 @@ class ServersImportPage extends Page
         $eggsResponse = Http::withToken($apiToken)->get($eggsApiUrl);
 
         $eggsData = [];
+        $eggCount = 0;
 
         if ($eggsResponse->successful()) {
             $data = $eggsResponse->json();
@@ -150,8 +156,8 @@ class ServersImportPage extends Page
                     'description'   => $attributes['description'],
                     'docker_images' => $dockerImages,
                     'slug'          => $attributes['name'] ?? Str::random(10),
-                    ]
-                );
+                ]);
+                $eggCount++;
             }
         }
 
@@ -159,6 +165,7 @@ class ServersImportPage extends Page
         $serversResponse = Http::withToken($apiToken)->get($serversApiUrl);
 
         $serversData = [];
+        $serverCount = 0;
 
         if ($serversResponse->successful()) {
             $serversData = $serversResponse->json()['data'];
@@ -171,21 +178,26 @@ class ServersImportPage extends Page
                 }
                 try {
                     Server::create([
-                    'limits'         => $attributes['limits'],
-                    'user'           => $attributes['user'],
-                    'egg'            => $attributes['egg'],
-                    'feature_limits' => $attributes['feature_limits'],
-                    'status'         => $attributes['status'] ?? 'None',
-                    'uuid'           => $attributes['uuid'],
-                    'name'           => $attributes['name'],
-                    'node'           => $attributes['node'],
-                    'description'    => $attributes['description'],
-                    'allocation_id'  => $attributes['allocation'],
-                    'docker_image'   => $attributes['container']['image'],
-                    'egg_variables'  => $attributes['container']['environment'],
-                    'start_on_completion' => true,
-                    'slug'           => $attributes['external_id'] ?? Str::random(10),
+                        'limits'              => $attributes['limits'],
+                        'user'                => $attributes['user'],
+                        'egg'                 => $attributes['egg'],
+                        'feature_limits'      => $attributes['feature_limits'],
+                        'status'              => $attributes['status'] ?? 'None',
+                        'uuid'                => $attributes['uuid'],
+                        'name'                => $attributes['name'],
+                        'node'                => $attributes['node'],
+                        'description'         => $attributes['description'],
+                        'allocation_id'       => $attributes['allocation'],
+                        'docker_image'        => $attributes['container']['image'],
+                        'egg_variables'       => $attributes['container']['environment'],
+                        'start_on_completion' => true,
+                        'slug'                => $attributes['external_id'] ?? Str::random(),
                     ]);
+                    $allocation = Allocation::where('id', $attributes['allocation'])->first();
+                    if (!$allocation->assigned) {
+                        $allocation->update(['assigned' => true]);
+                    }
+                    $serverCount++;
                 } catch (Exception $e) {
                     Notification::make()
                         ->title('サーバー情報の取り込みに失敗しました')
@@ -197,7 +209,7 @@ class ServersImportPage extends Page
             }
         }
 
-        $this->importResult = "Eggs (".count($eggsData)."個) とサーバー情報 (".count($serversData)."個) と Allocations (".count($allocationsData)."個) の取り込みが完了しました";
+        $this->importResult = "ノード ({$nodeCount}個) とサーバー情報 ({$serverCount}個) と Allocations ({$allocationCount}個) と Eggs ({$eggCount}個) の取り込みが完了しました";
     }
 
     public static function shouldRegisterNavigation(): bool

@@ -12,11 +12,12 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Hidden;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Tables\Columns\ImageColumn;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use App\Models\Node;
 use App\Providers\Filament\AvatarsProvider;
-use App\Func\NumberConverter;
+use App\Components\NumberConverter;
 use Spatie\Permission\Models\Role;
 
 class UserResource extends Resource
@@ -156,10 +157,13 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
+                ImageColumn::make('avatar')
+                    ->label('')
+                    ->circular()
+                    ->state(fn ($record) => (new AvatarsProvider())->get($record))
+                    ->width(40),
                 TextColumn::make('name')
-                    ->label('ユーザー名')
-                    ->icon(fn ($record) => (new AvatarsProvider())->get($record))
-                    ->size(TextColumn\TextColumnSize::Large),
+                    ->label('ユーザー名'),
                 TextColumn::make('roles')
                     ->label('ロール')
                     ->formatStateUsing(fn ($state, $record) => $record->getRoleNames()->join(', ')),
