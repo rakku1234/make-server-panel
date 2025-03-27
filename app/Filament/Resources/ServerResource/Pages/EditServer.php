@@ -75,16 +75,16 @@ class EditServer extends EditRecord
                                     ->label('割り当て')
                                     ->hint('サーバーのIPアドレスとポートです')
                                     ->reactive()
-                                    ->options(function (callable $get, $livewire) {
+                                    ->options(function (callable $get) {
                                         $node = $get('node');
                                         $query = Allocation::where('node_id', $node);
                                         $allocationId = $get('allocation_id');
-                                        $query->where('id', $allocationId)->orWhere('assigned', false);
+                                        $query->where(fn ($query) => $query->where('id', $allocationId)->orWhere('assigned', false));
                                         if (!auth()->user()->hasRole('admin')) {
                                             $query->where('public', true);
                                         }
                                         return $query->get()
-                                            ->mapWithKeys(fn ($allocation) => [$allocation->id => "{$allocation->alias}:{$allocation->port}"],)
+                                            ->mapWithKeys(fn ($allocation) => [$allocation->id => "{$allocation->alias}:{$allocation->port}"])
                                             ->toArray();
                                     })
                                     ->required(),
@@ -167,9 +167,9 @@ class EditServer extends EditRecord
                                 ->columnSpanFull()
                                 ->visible(fn (callable $get) => !empty($get('egg_variables'))),
                             Group::make()
-                                ->schema(function (callable $livewire) {
-                                    $eggId = data_get($livewire->record, 'egg');
-                                    $eggValues = data_get($livewire->record, 'egg_variables');
+                                ->schema(function (callable $get) {
+                                    $eggId = $get('egg');
+                                    $eggValues = $get('egg_variables');
                                     $eggRecord = Egg::where('egg_id', $eggId)->first();
                                     $eggMetas = $eggRecord->egg_variables;
                                     $fields = [];

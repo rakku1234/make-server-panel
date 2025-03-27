@@ -99,7 +99,7 @@ class CreateServer extends CreateRecord
                                     $query = Node::query();
                                     if (!auth()->user()->hasRole('admin')) {
                                         $query->where('public', 1);
-                                  }
+                                    }
                                     return $query->pluck('name', 'node_id');
                                 })
                                 ->required()
@@ -108,16 +108,15 @@ class CreateServer extends CreateRecord
                                 ->label('割り当て')
                                 ->hint('サーバーのIPアドレスとポートです')
                                 ->reactive()
-                                ->options(function (callable $get, $livewire) {
+                                ->options(function (callable $get) {
                                     $node = $get('node');
                                     $query = Allocation::where('node_id', $node);
-                                    $allocationId = $get('allocation_id');
-                                    $query->where('id', $allocationId)->orWhere('assigned', false);
+                                    $query->where('assigned', false);
                                     if (!auth()->user()->hasRole('admin')) {
                                         $query->where('public', true);
                                     }
                                     return $query->get()
-                                        ->mapWithKeys(fn ($allocation) => [$allocation->id => "{$allocation->alias}:{$allocation->port}"],)
+                                        ->mapWithKeys(fn ($allocation) => [$allocation->id => "{$allocation->alias}:{$allocation->port}"])
                                         ->toArray();
                                 })
                                 ->required(),
