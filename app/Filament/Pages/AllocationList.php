@@ -1,55 +1,40 @@
 <?php
 
-namespace App\Filament\Resources;
+namespace App\Filament\Pages;
 
-use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
+use Filament\Pages\Page;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Grouping\Group;
-use App\Filament\Resources\AllocationResource\Pages;
 use App\Models\Allocation;
 use App\Models\Node;
 
-class AllocationResource extends Resource
+class AllocationList extends Page implements HasTable
 {
-    protected static ?string $model = Allocation::class;
+    use InteractsWithTable;
+    protected static string $view = 'filament.pages.allocation-list';
     protected static ?string $navigationIcon = 'tabler-server-cog';
     protected static ?string $navigationLabel = 'アロケーション';
     protected static ?string $navigationGroup = 'サーバー管理';
     protected static ?int $navigationSort = 4;
+    protected static ?string $slug = "allocations";
+    protected static ?string $title = "アロケーションリスト";
 
-    public static function canCreate(): bool
+    public function mount(): void
     {
-        return false;
-    }
-
-    public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                TextInput::make('alias')
-                    ->label('エイリアス')
-                    ->disabled(),
-                TextInput::make('port')
-                    ->label('ポート')
-                    ->disabled(),
-                Toggle::make('assigned')
-                    ->label('割り当て')
-                    ->disabled(),
-                Toggle::make('public')
-                    ->label('公開'),
-            ]);
+        if (!auth()->user()->can('allocation.view')) {
+            abort(403);
+        }
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->query(Allocation::query())
             ->groups([
                 Group::make('node_id')
                     ->label('ノード')
@@ -77,23 +62,7 @@ class AllocationResource extends Resource
                         true => '公開',
                         false => '非公開',
                     ]),
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => Pages\ListAllocation::route('/'),
-            'edit' => Pages\EditAllocation::route('/{record}/edit'),
-        ];
+                ]);
     }
 
     public static function shouldRegisterNavigation(): bool
