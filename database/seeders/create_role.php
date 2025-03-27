@@ -19,8 +19,6 @@ class create_role extends Seeder
             'server.delete',
             'server.view',
             'server.import',
-            'node.edit',
-            'node.create',
             'node.view',
             'egg.edit',
             'egg.delete',
@@ -42,6 +40,6 @@ class create_role extends Seeder
 
         $admin->syncPermissions(Permission::all());
 
-        $user->syncPermissions(['server.view', 'server.create', 'server.delete']);
+        $user->syncPermissions(['server.view', 'server.create', 'server.delete', 'server.edit']);
     }
 }
