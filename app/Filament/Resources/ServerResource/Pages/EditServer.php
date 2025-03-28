@@ -179,7 +179,16 @@ class EditServer extends EditRecord
                                     $eggRecord = Egg::where('egg_id', $eggId)->first();
                                     $eggMetas = $eggRecord->egg_variables;
                                     $fields = [];
-                                    $decode = json_decode($eggMetas, true);
+                                    try {
+                                        $decode = json_decode($eggMetas, true);
+                                    } catch (TypeError $e) { /** @phpstan-ignore-line */
+                                        Notification::make()
+                                            ->title('エラーが発生しました')
+                                            ->body($e->getMessage())
+                                            ->danger()
+                                            ->send();
+                                        redirect()->to('/admin/servers');
+                                    }
                                     $count = 0;
                                     foreach ($eggValues as $key => $value) {
                                         if (!isset($decode[$count])) {

@@ -26,7 +26,7 @@ final class ServerApiService
             "egg"         => $server->egg,
             "environment" => $server->egg_variables,
             "docker_image"=> $server->docker_image,
-            "oom_killer"  => $server->limits['oom_kill'] ?? true,
+            "oom_killer"  => $server->limits['oom_killer'],
             "start_on_completion" => (bool)$server->start_on_completion,
             "allocation" => [
                 "default" => $server->allocation_id,
