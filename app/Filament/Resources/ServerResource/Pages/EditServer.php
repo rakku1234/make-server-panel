@@ -15,7 +15,6 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Group;
 use Filament\Forms\Components\TagsInput;
-use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use App\Services\ServerApiService;
 use App\Models\Server;
@@ -26,6 +25,7 @@ use App\Models\Allocation;
 use App\Services\TranslatorAPIService;
 use App\Components\NumberConverter;
 use App\Filament\Resources\ServerResource;
+use CodeWithDennis\SimpleAlert\Components\Forms\SimpleAlert;
 use TypeError;
 
 class EditServer extends EditRecord
@@ -49,6 +49,12 @@ class EditServer extends EditRecord
     {
         return $form
             ->schema([
+                SimpleAlert::make('suspendedAlert')
+                    ->title('サーバーは現在禁止されています。')
+                    ->description('管理者にお問い合わせください。')
+                    ->warning()
+                    ->columnSpanFull()
+                    ->visible(fn (callable $get) => $get('status') === 'suspended'),
                 Tabs::make('server-tab')
                     ->tabs([
                         Tab::make('basic-server')
@@ -312,15 +318,6 @@ class EditServer extends EditRecord
                                 ->default(500)
                                 ->numeric()
                                 ->required(),
-                            ToggleButtons::make('limits.oom_killer')
-                                ->label('OOM Killer')
-                                ->options([
-                                    'true' => '有効',
-                                    'false' => '無効',
-                                ])
-                                ->default('true')
-                                ->disabled()
-                                ->inline(),
                             ])
                             ->columns(2)
                     ])

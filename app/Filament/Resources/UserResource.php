@@ -6,6 +6,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions;
 use Filament\Tables\Table;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Columns\TextColumn;
@@ -32,47 +33,49 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                TextInput::make('name')
-                    ->label('ユーザー名')
-                    ->required(),
-                TextInput::make('email')
-                    ->label('メールアドレス')
-                    ->email()
-                    ->required(),
-                TextInput::make('password')
-                    ->label('パスワード')
-                    ->password()
-                    ->required(fn ($livewire) => $livewire instanceof CreateRecord)
-                    ->dehydrated(fn ($state) => filled($state)),
-                Select::make('roles')
-                    ->label('ロール')
-                    ->preload()
-                    ->relationship('roles', 'name'),
-                Select::make('permissions')
-                    ->label('パーミッション')
-                    ->preload()
-                    ->reactive()
-                    ->multiple()
-                    ->relationship('permissions', 'name', function ($query, callable $get) {
-                        $query->whereIn('id', function ($subquery) {
-                            $subquery->select('permission_id')
-                                     ->from('role_has_permissions');
-                        });
-                        $selectedRoles = $get('roles');
-                        if (is_array($selectedRoles)) {
-                            $excludedPermissionIds = Role::whereIn('id', $selectedRoles)
-                                ->with('permissions')
-                                ->get()
-                                ->pluck('permissions')
-                                ->flatten()
-                                ->pluck('id')
-                                ->toArray();
-                            if (!empty($excludedPermissionIds)) {
-                                $query->whereNotIn('id', $excludedPermissionIds);
-                            }
-                        }
-                        return $query;
-                    }),
+                Section::make('基本情報')
+                    ->schema([
+                        TextInput::make('name')
+                            ->label('ユーザー名')
+                            ->required(),
+                        TextInput::make('email')
+                            ->label('メールアドレス')
+                            ->email()
+                            ->required(),
+                        TextInput::make('password')
+                            ->label('パスワード')
+                            ->password()
+                            ->required(fn ($livewire) => $livewire instanceof CreateRecord)
+                            ->dehydrated(fn ($state) => filled($state)),
+                    ])
+                    ->columns(3),
+                Section::make('権限')
+                    ->schema([
+                        Select::make('roles')
+                            ->label('ロール')
+                            ->preload()
+                            ->relationship('roles', 'name'),
+                        Select::make('permissions')
+                            ->label('パーミッション')
+                            ->preload()
+                            ->reactive()
+                            ->multiple()
+                            ->relationship('permissions', 'name', function ($query, callable $get) {
+                                $query->whereIn('id', function ($subquery) {
+                                    $subquery->select('permission_id')
+                                        ->from('role_has_permissions');
+                                });
+                                $selectedRoles = $get('roles');
+                                if (is_array($selectedRoles)) {
+                                    $excludedPermissionIds = Role::whereIn('id', $selectedRoles)->with('permissions')->get()->pluck('permissions')->flatten()->pluck('id')->toArray();
+                                    if (!empty($excludedPermissionIds)) {
+                                        $query->whereNotIn('id', $excludedPermissionIds);
+                                    }
+                                }
+                                return $query;
+                            }),
+                    ])
+                    ->columns(),
 
                 Repeater::make('resource_limits')
                     ->label('ノードごとのリソース制限')
@@ -148,7 +151,10 @@ class UserResource extends Resource
                             $set('resource_limits', $values);
                         }
                     })
-                    ->columns(2)
+                    ->columns()
+                    ->addable(false)
+                    ->deletable(false)
+                    ->reorderable(false)
                     ->columnSpanFull(),
             ]);
     }

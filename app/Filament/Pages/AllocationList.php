@@ -46,9 +46,8 @@ class AllocationList extends Page implements HasTable
                     ->label('エイリアス'),
                 TextColumn::make('port')
                     ->label('ポート'),
-                TextColumn::make('assigned')
-                    ->label('割り当て')
-                    ->formatStateUsing(fn ($state) => $state ? '割り当て済み' : '未割り当て'),
+                ToggleColumn::make('assigned')
+                    ->label('割り当て'),
                 ToggleColumn::make('public')
                     ->label('公開'),
             ])

@@ -16,7 +16,7 @@ use App\Filament\Widgets\ResourceLimit;
 use App\Filament\Resources\ServerResource;
 use App\Jobs\DeleteServerJob;
 use App\Models\Node;
-use App\Models\Egg;
+use App\Models\Allocation;
 
 class ListServer extends ListRecords
 {
@@ -45,8 +45,6 @@ class ListServer extends ListRecords
     public function table(Table $table): Table
     {
         return $table
-            ->reorderable('sort')
-            ->defaultSort('sort')
             ->poll('180s')
             ->deferLoading()
             ->striped()
@@ -106,9 +104,12 @@ class ListServer extends ListRecords
                         empty($state) => '無制限',
                         default => NumberConverter::convert($state, 'MiB', auth()->user()->unit, true),
                     }),
-                TextColumn::make('egg')
-                    ->label('Egg名')
-                    ->formatStateUsing(fn ($record) => Egg::where('egg_id', $record->egg)->first()->name),
+                TextColumn::make('allocation_id')
+                    ->label('アドレス')
+                    ->formatStateUsing(function ($record) {
+                        $allocation = Allocation::where('id', $record->allocation_id)->first();
+                        return "$allocation->alias:$allocation->port";
+                    }),
             ])
             ->filters([
                 SelectFilter::make('node')

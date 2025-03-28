@@ -17,11 +17,9 @@ return new class extends Migration
             $table->uuid('uuid')->unique()->nullable();
             $table->string('name');
             $table->string('slug')->unique();
-            $table->unsignedInteger('sort')->nullable();
             $table->text('description')->nullable();
 
             $table->string('status')->default('');
-            $table->string('external_id')->nullable()->unique();
             $table->unsignedInteger('allocation_id');
             $table->unsignedInteger('node');
             $table->boolean('start_on_completion')->default(true);

@@ -29,9 +29,9 @@ class ServerStatus implements ShouldQueue
         foreach ($uuids as $serverUuid) {
             $response = Http::withToken(config('panel.api_client_token'))
                 ->withHeaders([
-                    'Accept'       => 'application/json',
+                    'Accept' => 'application/json',
                 ])
-                ->get(config('panel.api_url') . '/api/client/servers/'.$serverUuid.'/resources');
+                ->get(config('panel.api_url').'/api/client/servers/'.$serverUuid.'/resources');
             if ($response->successful()) {
                 $status = $response->json()['attributes']['current_state'];
                 Server::where('uuid', $serverUuid)->update(['status' => $status]);

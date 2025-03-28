@@ -14,13 +14,7 @@ final class NumberConverter
      * @param int $precision 小数点以下の桁数
      * @return string|float 変換された値
      */
-    public static function convert(
-        float|int $value,
-        string $fromUnit,
-        string $toUnit,
-        bool $includeUnit = false,
-        int $precision = 0
-    ): string|float {
+    public static function convert(float|int $value, string $fromUnit, string $toUnit, bool $includeUnit = false, int $precision = 0): string|float {
         if ($toUnit !== 'auto') {
             if ($fromUnit === 'MiB' && $toUnit === 'MB') {
                 $multiplier = bcdiv('1000', '1024', 10);
@@ -87,14 +81,10 @@ final class NumberConverter
      * @param float|int $value 変換する値
      * @param bool $isCore コア数またはパーセント
      * @param int $precision 小数点以下の桁数
-     * @return float|int 変換された値
+     * @return float 変換された値
      */
-    public static function convertCpuCore(
-        float|int $value,
-        bool $isCore = true,
-        int $precision = 2
-    ): float|int {
+    public static function convertCpuCore(float|int $value, bool $isCore = true, int $precision = 2): float {
         $result = $isCore ? bcdiv((string)$value, '100', 10) : bcmul((string)$value, '100', 10);
-        return phpversion() >= 8.4 ? bcround($result, $precision) : round((float)$result, $precision);
+        return phpversion() >= 8.4 ? (float)bcround($result, $precision) : round((float)$result, $precision);
     }
 }

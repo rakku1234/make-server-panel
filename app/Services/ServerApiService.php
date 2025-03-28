@@ -19,14 +19,11 @@ final class ServerApiService
         }
 
         $data = [
-            /** @phpstan-ignore-next-line */
-            "external_id" => $server?->external_id,
             "name"        => $server->name,
             /** @phpstan-ignore-next-line */
             "description" => $server?->description,
             "user"        => User::find($server->user)->panel_user_id,
             "egg"         => $server->egg,
-            "slug"        => $server->slug,
             "environment" => $server->egg_variables,
             "docker_image"=> $server->docker_image,
             "oom_killer"  => $server->limits['oom_kill'] ?? true,

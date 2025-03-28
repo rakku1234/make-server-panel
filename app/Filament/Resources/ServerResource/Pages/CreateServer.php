@@ -18,6 +18,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TagsInput;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
@@ -58,12 +59,6 @@ class CreateServer extends CreateRecord
     {
         return $form
             ->schema([
-                SimpleAlert::make('suspendedAlert')
-                    ->title('サーバーは現在禁止されています。')
-                    ->description('管理者にお問い合わせください。')
-                    ->warning()
-                    ->columnSpanFull()
-                    ->visible(fn (callable $get) => $get('status') === 'suspended'),
                 SimpleAlert::make('SettingResourceLimit')
                     ->title('必要な設定が行われていません！')
                     ->description('管理者にお問い合わせください。')
@@ -85,13 +80,11 @@ class CreateServer extends CreateRecord
                                         ->icon('tabler-arrows-random')
                                         ->action(fn (callable $set) => $set('name', Str::random()))
                                 ),
-                            TextInput::make('external_id')
-                               ->label('外部ID')
-                                ->hint('何を意味しているかわからない場合は、空のままにしてください'),
-                            TextInput::make('description')
-                                ->label('説明')
-                                ->autocomplete(false)
-                                ->columnSpanFull(),
+                            Select::make('user')
+                                ->label('管理者')
+                                ->options([auth()->id() => auth()->user()->name])
+                                ->default(auth()->id())
+                                ->required(),
                             Select::make('node')
                                 ->label('ノード')
                                 ->hint('サーバーが実行されるノードです')
@@ -120,7 +113,13 @@ class CreateServer extends CreateRecord
                                         ->toArray();
                                 })
                                 ->required(),
-                        ]),
+                            Textarea::make('description')
+                                ->label('説明')
+                                ->autocomplete(false)
+                                ->autosize()
+                                ->columnSpanFull(),
+                        ])
+                        ->columns(),
 
                     Step::make('egg-and-docker-settings')
                         ->label('Egg & Dockerの設定')
@@ -234,7 +233,6 @@ class CreateServer extends CreateRecord
                                 })
                                 ->visible(fn (callable $get) => !empty($get('egg'))),
                         ])
-                        ->columns(1)
                         ->visible(fn ($livewire) => $livewire instanceof CreateRecord),
 
                     Step::make('resource-settings')
@@ -358,7 +356,7 @@ class CreateServer extends CreateRecord
                                 ->disabled()
                                 ->inline(),
                         ])
-                        ->columns(2),
+                        ->columns(),
 
                     Step::make('other-settings')
                         ->label('その他の設定')
@@ -392,17 +390,14 @@ class CreateServer extends CreateRecord
                                 ->default(3)
                                 ->readOnly()
                                 ->required(),
-                            Hidden::make('user')
-                                ->default(auth()->id())
-                                ->required(),
                             Hidden::make('slug')
-                                ->default(fn (callable $get) => Str::slug($get('external_id') ?? Str::random()))
+                                ->default(fn (callable $get) => Str::slug($get('name')))
                                 ->required(),
                             Hidden::make('status')
                                 ->default('installing')
                                 ->required(),
                         ])
-                        ->columns(2)
+                        ->columns()
                 ])
                 ->submitAction(new HtmlString(Blade::render(<<<BLADE
                     <x-filament::button type="submit" size="sm">Create</x-filament::button>
@@ -455,7 +450,7 @@ class CreateServer extends CreateRecord
         $data = $this->form->getState();
         $data['start_on_completion'] = isset($data['start_on_completion']) ? 1 : 0;
         try {
-            $record = $this->handleRecordCreation($data);
+            $this->handleRecordCreation($data);
         } catch (Exception $e) {
             Log::error($e);
             Notification::make()
